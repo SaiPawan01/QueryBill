@@ -3,8 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import Base, engine
 
-from app.models.user import User
 from app.auth.routes import router as auth_router
+from app.routes.document_route import router as document_route
 
 
 # FastAPI app instance
@@ -28,6 +28,7 @@ app.add_middleware(
 # creates all table in db
 Base.metadata.create_all(bind=engine)
 
+
 # Root route
 @app.get("/")
 def read_root():
@@ -36,3 +37,4 @@ def read_root():
 
 # Routers
 app.include_router(auth_router)
+app.include_router(document_route)
