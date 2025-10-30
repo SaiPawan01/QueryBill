@@ -1,2 +1,17 @@
+# Web Framework
 fastapi==0.120.2
 uvicorn==0.38.0
+
+
+# Database
+SQLAlchemy==2.0.44
+psycopg2==2.9.11
+
+
+# Dev dependencies
+python-dotenv==1.2.1
+
+# Auth
+passlib==1.7.4
+python-jose==3.3.0
+python-multipart==0.0.17
