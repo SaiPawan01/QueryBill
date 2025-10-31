@@ -10,7 +10,7 @@ from app.database import get_db
 
 
 
-router = APIRouter(prefix="/api/documents",tags=["Document"])
+router = APIRouter(prefix="/documents",tags=["Document"])
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 

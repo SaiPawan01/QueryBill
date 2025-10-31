@@ -7,8 +7,7 @@ from langchain_core.messages import HumanMessage
 from app.models.document import Document
 from app.models.extracted_data import ExtractedData
 
-import pytesseract
-from PIL import Image
+import easyocr
 import pdfplumber
 
 from dotenv import load_dotenv
@@ -19,6 +18,8 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", api_key=GEMINI_API_KEY, temperature=0)
 
 class ExtractionService:
+    # Initialize EasyOCR reader once to avoid repeated model loads
+    _easyocr_reader = easyocr.Reader(["en"], gpu=False)
     @staticmethod
     def extract_text_from_file(file_path: str) -> str:
         ext = Path(file_path).suffix.lower()
@@ -40,9 +41,8 @@ class ExtractionService:
 
     @staticmethod
     def _extract_text_image(file_path: str) -> str:
-        im = Image.open(file_path)
-        # Enhance OCR as needed here
-        return pytesseract.image_to_string(im)
+        results = ExtractionService._easyocr_reader.readtext(file_path, detail=0, paragraph=True)
+        return "\n".join([r.strip() for r in results if isinstance(r, str) and r.strip()])
 
     @staticmethod
     def extract_from_document(doc: Document) -> dict:

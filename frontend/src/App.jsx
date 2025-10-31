@@ -3,34 +3,50 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import Auth from './pages/auth.jsx';
 import Dashboard from './pages/Dashboard.jsx';
-import ProtectedRoute from './componets/ProtectedRoute.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
+import PublicRoute from './components/PublicRoute.jsx';
 import Document from './pages/Document.jsx';
+import Layout from './components/Layout.jsx';
 
 function App() {
   return (
     <Router>
       <Routes>
 
-        {/* Public route */}
-        <Route path="/" element={<Auth />} />
+        {/* Public route (redirects to /dashboard if already authenticated) */}
+        <Route
+          path="/"
+          element={
+            <PublicRoute>
+              <Auth />
+            </PublicRoute>
+          }
+        />
 
         {/* Protected routes */}
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <Layout>
+                <Dashboard />
+              </Layout>
             </ProtectedRoute>
           }
         />
         <Route
-          path="/documents"
+          path="/documents/:id"
           element={
             <ProtectedRoute>
-              <Document />
+              <Layout>
+                <Document />
+              </Layout>
             </ProtectedRoute>
           }
         />
+
+        {/* Fallback to login or dashboard depending on auth handled by PublicRoute at "/" */}
+        <Route path="*" element={<PublicRoute><Auth /></PublicRoute>} />
 
       </Routes>
     </Router>

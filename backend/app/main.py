@@ -31,13 +31,16 @@ app.add_middleware(
 Base.metadata.create_all(bind=engine)
 
 
-# Root route
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to FastAPI!"}
+
 
 
 # Routers
 app.include_router(auth_router)
 app.include_router(document_route)
 app.include_router(router)
+
+
+# Root route
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to FastAPI!"}
