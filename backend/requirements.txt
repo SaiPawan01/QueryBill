@@ -1,18 +1,29 @@
-# Web Framework
+# Web framework
 fastapi==0.120.2
 uvicorn==0.38.0
-
 
 # Database
 sqlalchemy==2.0.44
 psycopg2==2.9.11
 
-
-# Dev dependencies
-python-dotenv==1.2.1
-
-# Auth
+# Auth and security
 passlib==1.7.4
 python-jose==3.3.0
 python-multipart==0.0.17
-pydantic_settings==2.11.0
+
+# Config
+python-dotenv==1.2.1
+pydantic>=2.7,<3
+pydantic-settings>=2.2,<3
+
+# LangChain (v2-compatible)
+langchain>=0.2.0
+langchain-core>=0.2.38,<0.3
+langchain-community>=0.2.0
+langchain-text-splitters>=0.0.2
+langsmith>=0.1.17,<0.2.0
+langchain-google-genai>=1.0.0
+
+
+pytesseract==0.3.13
+ pdfplumber==0.11.7 

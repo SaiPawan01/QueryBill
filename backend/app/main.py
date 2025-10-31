@@ -5,10 +5,12 @@ from app.database import Base, engine
 
 from app.auth.routes import router as auth_router
 from app.routes.document_route import router as document_route
+from app.routes.extract_document_router import router
 
 
 # FastAPI app instance
 app = FastAPI()
+
 
 
 origins = [
@@ -38,3 +40,4 @@ def read_root():
 # Routers
 app.include_router(auth_router)
 app.include_router(document_route)
+app.include_router(router)

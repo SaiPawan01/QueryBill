@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
 from app.database import Base
 from datetime import datetime
 
@@ -14,3 +15,5 @@ class Document(Base):
     file_size = Column(Integer)
     file_type = Column(String)
     uploaded_at = Column(DateTime, default=datetime.utcnow)
+
+    extractions = relationship("ExtractedData", back_populates="document", cascade="all, delete-orphan")
