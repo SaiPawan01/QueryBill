@@ -53,7 +53,7 @@ export default function ViewerPanel({ downloadUrl }) {
   }
 
   return (
-    <div className="col-span-12 lg:col-span-4 bg-white rounded-lg shadow p-3 h-[78vh] flex flex-col overflow-hidden">
+    <div className="bg-white rounded-lg shadow p-3 h-[78vh] flex flex-col overflow-hidden">
       <div className="flex items-center justify-between mb-2">
         <div className="text-sm text-gray-600">Document Viewer</div>
         <div className="flex gap-2">

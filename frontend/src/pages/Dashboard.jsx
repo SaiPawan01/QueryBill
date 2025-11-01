@@ -11,7 +11,7 @@ import {
   selectError,
 } from '../features/documents/documentsSlice'
 import { Link } from 'react-router-dom'
-import { getDownloadUrl } from '../features/documents/api'
+import { downloadDocumentApi } from '../features/documents/api'
 
 function Dashboard() {
   const dispatch = useDispatch();
@@ -54,6 +54,23 @@ function Dashboard() {
     try {
       await dispatch(deleteDocument(id)).unwrap();
     } catch (_) {}
+  };
+
+  const onDownload = async (doc) => {
+    try {
+      const response = await downloadDocumentApi(doc.id);
+      const blob = new Blob([response.data]);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.name || `document_${doc.id}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (_) {
+      // error surfaced elsewhere if needed
+    }
   };
 
   return (
@@ -111,14 +128,12 @@ function Dashboard() {
                   </div>
                   <div className="col-span-2 text-gray-600">{Math.round((doc.size || 0) / 1024)} KB</div>
                   <div className="col-span-4 flex justify-end gap-2">
-                    <a
-                      href={getDownloadUrl(doc.id)}
-                      target="_blank"
-                      rel="noreferrer"
+                    <button
+                      onClick={() => onDownload(doc)}
                       className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-md text-gray-800"
                     >
                       Download
-                    </a>
+                    </button>
                     <button
                       onClick={() => onDelete(doc.id)}
                       className="px-3 py-1.5 text-sm bg-red-50 hover:bg-red-100 rounded-md text-red-700"

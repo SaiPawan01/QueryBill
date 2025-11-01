@@ -41,6 +41,16 @@ export function getDownloadUrl(docId) {
   return `${API_BASE}/documents/${docId}`;
 }
 
+export async function downloadDocumentApi(docId) {
+  const response = await axios.get(`${API_BASE}/documents/${docId}`, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+    responseType: "blob",
+  });
+  return response;
+}
+
 
 export async function extractDocumentApi(docId) {
   const response = await axios.post(`${API_BASE}/document/extract/${docId}`, null, {
@@ -53,6 +63,30 @@ export async function extractDocumentApi(docId) {
 
 export async function getExtractedDocumentApi(docId) {
   const response = await axios.get(`${API_BASE}/document/extract/${docId}`, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+  return response.data;
+}
+
+// Chat API functions
+export async function sendChatMessageApi(documentId, message) {
+  const response = await axios.post(
+    `${API_BASE}/chat/${documentId}/message`,
+    { message },
+    {
+      headers: {
+        ...getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  return response.data;
+}
+
+export async function getChatHistoryApi(documentId) {
+  const response = await axios.get(`${API_BASE}/chat/${documentId}/history`, {
     headers: {
       ...getAuthHeaders(),
     },

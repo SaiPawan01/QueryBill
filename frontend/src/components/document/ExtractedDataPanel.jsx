@@ -72,7 +72,7 @@ export default function ExtractedDataPanel({ id, data, onFieldChange, onLineItem
   };
 
   return (
-    <div className="col-span-12 lg:col-span-4 bg-white rounded-lg shadow h-[78vh] flex flex-col">
+    <div className="bg-white rounded-lg shadow h-[78vh] flex flex-col">
       <div className="sticky top-0 z-10 bg-white p-3 border-b">
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-600">Extracted Data</div>

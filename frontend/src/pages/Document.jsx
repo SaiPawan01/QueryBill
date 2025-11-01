@@ -64,10 +64,16 @@ function Document() {
         {error && <div className="p-6 text-red-600">{error}</div>}
 
         {!loading && !error && (
-          <div className="grid grid-cols-12 gap-3">
-            <ViewerPanel downloadUrl={getDownloadUrl(id)} />
-            <ExtractedDataPanel id={id} data={merged || {}} onFieldChange={setField} onLineItemChange={setLineItemField} />
-            <ChatPanel data={merged || {}} />
+          <div className="flex gap-3 flex-col lg:flex-row">
+            <div className="flex-1 min-w-0">
+              <ViewerPanel downloadUrl={getDownloadUrl(id)} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <ExtractedDataPanel id={id} data={merged || {}} onFieldChange={setField} onLineItemChange={setLineItemField} />
+            </div>
+            <div className="w-full lg:w-[35%] min-w-0">
+              <ChatPanel />
+            </div>
           </div>
         )}
       </div>
