@@ -1,5 +1,6 @@
 import os
 import json
+import warnings
 from pathlib import Path
 from sqlalchemy.orm import Session
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -18,8 +19,19 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", api_key=GEMINI_API_KEY, temperature=0)
 
 class ExtractionService:
-    # Initialize EasyOCR reader once to avoid repeated model loads
-    _easyocr_reader = easyocr.Reader(["en"], gpu=False)
+    # Lazy initialization of EasyOCR reader to avoid slow startup
+    _easyocr_reader = None
+    
+    @classmethod
+    def _get_easyocr_reader(cls):
+        """Lazy-load EasyOCR reader only when needed."""
+        if cls._easyocr_reader is None:
+            # Suppress pin_memory warning during initialization
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=UserWarning, message=".*pin_memory.*")
+                cls._easyocr_reader = easyocr.Reader(["en"], gpu=False)
+        return cls._easyocr_reader
+    
     @staticmethod
     def extract_text_from_file(file_path: str) -> str:
         ext = Path(file_path).suffix.lower()
@@ -41,7 +53,9 @@ class ExtractionService:
 
     @staticmethod
     def _extract_text_image(file_path: str) -> str:
-        results = ExtractionService._easyocr_reader.readtext(file_path, detail=0, paragraph=True)
+        # Lazy-load reader when actually needed
+        reader = ExtractionService._get_easyocr_reader()
+        results = reader.readtext(file_path, detail=0, paragraph=True)
         return "\n".join([r.strip() for r in results if isinstance(r, str) and r.strip()])
 
     @staticmethod

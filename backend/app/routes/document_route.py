@@ -11,12 +11,16 @@ from app.database import get_db
 
 
 router = APIRouter(prefix="/documents",tags=["Document"])
-UPLOAD_DIR = "uploads"
+# Use absolute path relative to backend directory
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+UPLOAD_DIR = BASE_DIR / "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 
 def validate_file(file: UploadFile):
+    if not file.filename:
+        return False, "Filename is required"
     ext = Path(file.filename).suffix.lower()
     allowed = {".pdf", ".jpg", ".jpeg", ".png"}
     mime_allowed = {"application/pdf", "image/jpeg", "image/png"}
@@ -41,7 +45,7 @@ async def upload(file: UploadFile = File(...), user = Depends(get_current_user),
     
     ext = Path(file.filename).suffix.lower()
     filename = f"{Path(file.filename).stem}_{uuid.uuid4()}_{ext}"
-    filepath = os.path.join(UPLOAD_DIR, filename)
+    filepath = str(UPLOAD_DIR / filename)
     
     with open(filepath, "wb") as f:
         f.write(content)
@@ -71,7 +75,7 @@ async def list_docs(user = Depends(get_current_user), db: Session = Depends(get_
 async def get_doc(doc_id: int, user = Depends(get_current_user), db: Session = Depends(get_db)):
     doc = db.query(Document).filter(Document.id == doc_id, Document.user_id == user.id).first()
     if not doc:
-        raise HTTPException(status_code=404)
+        raise HTTPException(status_code=404, detail="Document not found")
     return FileResponse(doc.file_path, filename=doc.original_filename)
 
 
@@ -80,7 +84,7 @@ async def get_doc(doc_id: int, user = Depends(get_current_user), db: Session = D
 async def delete_doc(doc_id: int, user = Depends(get_current_user), db: Session = Depends(get_db)):
     doc = db.query(Document).filter(Document.id == doc_id, Document.user_id == user.id).first()
     if not doc:
-        raise HTTPException(status_code=404)
+        raise HTTPException(status_code=404, detail="Document not found")
     
     if os.path.exists(doc.file_path):
         os.remove(doc.file_path)

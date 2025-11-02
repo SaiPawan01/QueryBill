@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -12,20 +13,32 @@ from app.routes.chat_route import router as chat_router
 # FastAPI app instance
 app = FastAPI()
 
+# CORS configuration for development
+# Check if we're in development mode (allow all localhost origins)
+# In production, set specific origins via environment variable
+is_development = os.getenv("ENVIRONMENT", "development").lower() == "development"
 
-
-origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173"
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,          # domains that can access the backend
-    allow_credentials=True,         # allow cookies / tokens
-    allow_methods=["*"],            # allow all HTTP methods (GET, POST, etc.)
-    allow_headers=["*"],            # allow all request headers
-)
+if is_development:
+    # In development: allow all localhost origins (common ports)
+    # Note: Using ["*"] requires allow_credentials=False
+    # For Bearer token auth, credentials flag is not strictly needed
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],          # Allow all origins in development
+        allow_credentials=False,      # Required when using ["*"] - Bearer tokens work fine without this
+        allow_methods=["*"],          # Allow all HTTP methods
+        allow_headers=["*"],          # Allow all request headers
+    )
+else:
+    # In production: use specific origins
+    origins = os.getenv("CORS_ORIGINS", "").split(",") if os.getenv("CORS_ORIGINS") else []
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 
 # creates all table in db
