@@ -4,6 +4,7 @@ from pathlib import Path
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
+from typing import Optional
 from app.models.document import Document
 from app.auth.routes import get_current_user
 from app.database import get_db
@@ -83,15 +84,55 @@ async def upload(file: UploadFile = File(...), user = Depends(get_current_user),
 
 
 @router.get("/list")
-async def list_docs(user = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Get all documents for the authenticated user."""
+async def list_docs(
+    q: Optional[str] = None,
+    file_type: Optional[str] = None,
+    status_filter: Optional[str] = None,
+    offset: int = 0,
+    limit: int = 100,
+    user = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Get documents for the authenticated user with optional search and filters.
+
+    Query params:
+    - q: search term against original filename
+    - file_type: 'pdf' or 'image'
+    - status: 'active' or 'archived'
+    - offset, limit: pagination
+    """
     try:
-        docs = db.query(Document).filter(Document.user_id == user.id).all()
-        return [{"id": d.id, "name": d.original_filename, "size": d.file_size} for d in docs]
-    except Exception:
+        query = db.query(Document).filter(Document.user_id == user.id)
+        if q:
+            like = f"%{q.lower()}%"
+            query = query.filter(Document.original_filename.ilike(like))
+        if file_type:
+            query = query.filter(Document.file_type == file_type)
+        if status_filter:
+            query = query.filter(Document.status == status_filter)
+        docs = query.order_by(Document.uploaded_at.desc()).offset(offset).limit(limit).all()
+
+        def to_dict(d: Document):
+            # Get name without extension
+            name_without_ext = os.path.splitext(d.original_filename)[0]
+            return {
+                "id": d.id,
+                "name": name_without_ext,
+                "filename": d.filename,
+                "size": d.file_size,
+                "file_type": d.file_type,
+                "uploaded_at": d.uploaded_at.isoformat() if d.uploaded_at else None,
+                "status": d.status,
+            }
+        return [to_dict(d) for d in docs]
+    except Exception as e:
+        # Log full traceback to help debugging in development
+        import traceback
+        traceback.print_exc()
+        # surface the original error message in the response for local debugging
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve documents. Please try again."
+            detail=f"Failed to retrieve documents: {str(e)}"
         )
 
 @router.get("/{doc_id}")
@@ -125,3 +166,36 @@ async def delete_doc(doc_id: int, user = Depends(get_current_user), db: Session 
     db.delete(doc)
     db.commit()
     return {"message": "Deleted"}
+
+
+
+@router.post("/archive/{doc_id}")
+async def archive_doc(doc_id: int, user = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Archive a document (soft state change)."""
+    doc = db.query(Document).filter(Document.id == doc_id, Document.user_id == user.id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    try:
+        doc.status = "archived"
+        db.add(doc)
+        db.commit()
+        db.refresh(doc)
+        return {"message": "Archived", "id": doc.id}
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to archive document")
+
+
+@router.post("/unarchive/{doc_id}")
+async def unarchive_doc(doc_id: int, user = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Unarchive a document (set status back to active)."""
+    doc = db.query(Document).filter(Document.id == doc_id, Document.user_id == user.id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    try:
+        doc.status = "active"
+        db.add(doc)
+        db.commit()
+        db.refresh(doc)
+        return {"message": "Unarchived", "id": doc.id}
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to unarchive document")

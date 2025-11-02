@@ -4,13 +4,15 @@ import {
   uploadDocumentApi,
   deleteDocumentApi,
   extractDocumentApi,
+  archiveDocumentApi,
+  unarchiveDocumentApi,
 } from "./api";
 
 export const fetchDocuments = createAsyncThunk(
   "documents/fetchDocuments",
-  async (_, { rejectWithValue }) => {
+  async (params = {}, { rejectWithValue }) => {
     try {
-      const data = await fetchDocumentsApi();
+      const data = await fetchDocumentsApi(params);
       return data;
     } catch (error) {
       const message = error.response?.data?.detail || error.message || "Failed to load";
@@ -53,6 +55,32 @@ export const extractDocument = createAsyncThunk(
       return data;
     } catch (error) {
       const message = error.response?.data?.detail || error.message || "Extraction failed";
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const archiveDocument = createAsyncThunk(
+  "documents/archiveDocument",
+  async (docId, { rejectWithValue }) => {
+    try {
+      const data = await archiveDocumentApi(docId);
+      return data;
+    } catch (error) {
+      const message = error.response?.data?.detail || error.message || "Archive failed";
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const unarchiveDocument = createAsyncThunk(
+  "documents/unarchiveDocument",
+  async (docId, { rejectWithValue }) => {
+    try {
+      const data = await unarchiveDocumentApi(docId);
+      return data;
+    } catch (error) {
+      const message = error.response?.data?.detail || error.message || "Restore failed";
       return rejectWithValue(message);
     }
   }
@@ -103,6 +131,18 @@ const documentsSlice = createSlice({
       .addCase(deleteDocument.fulfilled, (state, action) => {
         const id = action.payload;
         state.items = state.items.filter((d) => d.id !== id);
+      })
+      .addCase(archiveDocument.fulfilled, (state, action) => {
+        // update item status locally if present
+        const id = action.payload?.id;
+        if (!id) return;
+        state.items = state.items.map((it) => (it.id === id ? { ...it, status: 'archived' } : it));
+      })
+      .addCase(unarchiveDocument.fulfilled, (state, action) => {
+        // update item status locally if present
+        const id = action.payload?.id;
+        if (!id) return;
+        state.items = state.items.map((it) => (it.id === id ? { ...it, status: 'active' } : it));
       })
       .addCase(deleteDocument.rejected, (state, action) => {
         state.error = action.payload || "Delete failed";

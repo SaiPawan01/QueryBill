@@ -15,5 +15,7 @@ class Document(Base):
     file_size = Column(Integer)
     file_type = Column(String)
     uploaded_at = Column(DateTime, default=datetime.utcnow)
+    # status: active | archived
+    status = Column(String, default="active")
 
     extractions = relationship("ExtractedData", back_populates="document", cascade="all, delete-orphan")

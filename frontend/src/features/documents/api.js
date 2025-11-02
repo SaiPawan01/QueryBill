@@ -8,11 +8,13 @@ function getAuthHeaders() {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-export async function fetchDocumentsApi() {
+export async function fetchDocumentsApi(params = {}) {
+  // params: { q, file_type, status, offset, limit }
   const response = await axios.get(`${API_BASE}/documents/list`, {
     headers: {
       ...getAuthHeaders(),
     },
+    params,
   });
   return response.data;
 }
@@ -31,6 +33,24 @@ export async function uploadDocumentApi(file) {
 
 export async function deleteDocumentApi(docId) {
   const response = await axios.delete(`${API_BASE}/documents/${docId}`, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+  return response.data;
+}
+
+export async function archiveDocumentApi(docId) {
+  const response = await axios.post(`${API_BASE}/documents/archive/${docId}`, null, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+  return response.data;
+}
+
+export async function unarchiveDocumentApi(docId) {
+  const response = await axios.post(`${API_BASE}/documents/unarchive/${docId}`, null, {
     headers: {
       ...getAuthHeaders(),
     },
