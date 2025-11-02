@@ -25,7 +25,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: "/api"   # or use actual backend URL if not proxying
+        VITE_API_URL: "/api"
     restart: unless-stopped
     depends_on:
       - backend
@@ -36,8 +36,9 @@ services:
     networks:
       - qbnet
 
-volumes:
-  # no local db volume when using Supabase
+# ...existing code...
+volumes: {}
 networks:
   qbnet:
     driver: bridge
+# ...existing code...
