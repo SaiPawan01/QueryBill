@@ -131,4 +131,21 @@ export async function getChatHistoryApi(documentId) {
   return response.data;
 }
 
+export async function updateExtractedDocumentApi(docId, data) {
+  try {
+    const response = await axios.put(`${API_BASE}/document/extract/${docId}`, data, {
+      headers: {
+        ...getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 404) {
+      throw new Error("Document not found");
+    }
+    throw error;
+  }
+}
 

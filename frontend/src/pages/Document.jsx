@@ -22,6 +22,7 @@ function Document() {
         const res = await getExtractedDocumentApi(id);
         if (isMounted) {
           setData(res);
+          console.log(res);
           setEdited({});
         }
       } catch (e) {
@@ -55,7 +56,6 @@ function Document() {
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-semibold text-gray-800">Document #{id}</h1>
           <div className="flex gap-2">
-            <a href={getDownloadUrl(id)} target="_blank" rel="noreferrer" className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-md text-gray-800">Download Original</a>
             <Link to="/dashboard" className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">Back</Link>
           </div>
         </div>
