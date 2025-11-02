@@ -27,86 +27,119 @@ class ChatService:
             return "No extracted data available for this document yet."
         
         # Convert SQLAlchemy model to dict, handling JSON fields
-        # Handle line_items which might be stored as JSON string or already parsed
-        line_items = []
-        if extracted_data.line_items:
-            if isinstance(extracted_data.line_items, (list, dict)):
-                line_items = extracted_data.line_items if isinstance(extracted_data.line_items, list) else [extracted_data.line_items]
-            elif isinstance(extracted_data.line_items, str):
-                try:
-                    parsed = json.loads(extracted_data.line_items)
-                    line_items = parsed if isinstance(parsed, list) else [parsed]
-                except:
-                    line_items = []
-        
         data_dict = {
-            "vendor_name": extracted_data.vendor_name,
-            "customer_name": extracted_data.customer_name,
-            "account_number": extracted_data.account_number,
-            "receipt_number": extracted_data.receipt_number,
-            "transaction_id": extracted_data.transaction_id,
-            "transaction_date": extracted_data.transaction_date,
-            "amount": extracted_data.amount,
-            "currency": extracted_data.currency,
+            "bill_id": extracted_data.bill_id,
+            "bill_type": extracted_data.bill_type,
+            "invoice_number": extracted_data.invoice_number,
+            "order_id": extracted_data.order_id,
+            "order_date": extracted_data.order_date,
+            "invoice_date": extracted_data.invoice_date,
+            "due_date": extracted_data.due_date,
             "payment_status": extracted_data.payment_status,
-            "payment_method": extracted_data.payment_method,
-            "linked_bill_number": extracted_data.linked_bill_number,
-            "billing_period_start": extracted_data.billing_period_start,
-            "billing_period_end": extracted_data.billing_period_end,
-            "tax_amount": extracted_data.tax_amount,
-            "other_charges": extracted_data.other_charges,
-            "total_amount": extracted_data.total_amount,
-            "generated_at": extracted_data.generated_at,
-            "remarks": extracted_data.remarks,
-            "line_items": line_items
+            "customer": extracted_data.customer,
+            "seller": extracted_data.seller,
+            "items": extracted_data.items,
+            "summary": extracted_data.summary,
+            "extraction_metadata": extracted_data.extraction_metadata
         }
+        
+        # Handle JSON fields that might be stored as strings
+        for field in ['customer', 'seller', 'items', 'summary', 'extraction_metadata']:
+            if isinstance(data_dict[field], str):
+                try:
+                    data_dict[field] = json.loads(data_dict[field])
+                except:
+                    data_dict[field] = None
         
         # Format as readable text
         context_parts = ["Document Information:\n"]
         
-        if data_dict.get("vendor_name"):
-            context_parts.append(f"Vendor: {data_dict['vendor_name']}")
-        if data_dict.get("customer_name"):
-            context_parts.append(f"Customer: {data_dict['customer_name']}")
-        if data_dict.get("account_number"):
-            context_parts.append(f"Account Number: {data_dict['account_number']}")
-        if data_dict.get("receipt_number"):
-            context_parts.append(f"Receipt Number: {data_dict['receipt_number']}")
-        if data_dict.get("transaction_id"):
-            context_parts.append(f"Transaction ID: {data_dict['transaction_id']}")
-        if data_dict.get("transaction_date"):
-            context_parts.append(f"Transaction Date: {data_dict['transaction_date']}")
-        if data_dict.get("amount") is not None:
-            context_parts.append(f"Amount: {data_dict['amount']} {data_dict.get('currency', '')}")
+        # Basic bill information
+        if data_dict.get("bill_id"):
+            context_parts.append(f"Bill ID: {data_dict['bill_id']}")
+        if data_dict.get("bill_type"):
+            context_parts.append(f"Bill Type: {data_dict['bill_type']}")
+        if data_dict.get("invoice_number"):
+            context_parts.append(f"Invoice Number: {data_dict['invoice_number']}")
+        if data_dict.get("order_id"):
+            context_parts.append(f"Order ID: {data_dict['order_id']}")
+        if data_dict.get("order_date"):
+            context_parts.append(f"Order Date: {data_dict['order_date']}")
+        if data_dict.get("invoice_date"):
+            context_parts.append(f"Invoice Date: {data_dict['invoice_date']}")
+        if data_dict.get("due_date"):
+            context_parts.append(f"Due Date: {data_dict['due_date']}")
         if data_dict.get("payment_status"):
             context_parts.append(f"Payment Status: {data_dict['payment_status']}")
-        if data_dict.get("payment_method"):
-            context_parts.append(f"Payment Method: {data_dict['payment_method']}")
-        if data_dict.get("linked_bill_number"):
-            context_parts.append(f"Linked Bill Number: {data_dict['linked_bill_number']}")
-        if data_dict.get("billing_period_start"):
-            context_parts.append(f"Billing Period: {data_dict['billing_period_start']} to {data_dict.get('billing_period_end', 'N/A')}")
-        if data_dict.get("tax_amount") is not None:
-            context_parts.append(f"Tax: {data_dict['tax_amount']}")
-        if data_dict.get("other_charges") is not None:
-            context_parts.append(f"Other Charges: {data_dict['other_charges']}")
-        if data_dict.get("total_amount") is not None:
-            context_parts.append(f"Total Amount: {data_dict['total_amount']} {data_dict.get('currency', '')}")
-        if data_dict.get("remarks"):
-            context_parts.append(f"Remarks: {data_dict['remarks']}")
         
-        # Format line items
-        line_items = data_dict.get("line_items", [])
-        if line_items:
-            context_parts.append("\nLine Items:")
-            if isinstance(line_items, list):
-                for idx, item in enumerate(line_items, 1):
-                    if isinstance(item, dict):
-                        desc = item.get("description", "N/A")
-                        qty = item.get("quantity", "N/A")
-                        rate = item.get("unit_rate", "N/A")
-                        amount = item.get("amount", "N/A")
-                        context_parts.append(f"  {idx}. {desc} - Qty: {qty}, Rate: {rate}, Amount: {amount}")
+        # Customer information
+        customer = data_dict.get("customer", {})
+        if customer:
+            context_parts.append("\nCustomer Information:")
+            if customer.get("name"):
+                context_parts.append(f"Name: {customer['name']}")
+            if customer.get("address"):
+                context_parts.append(f"Address: {customer['address']}")
+        
+        # Seller information
+        seller = data_dict.get("seller", {})
+        if seller:
+            context_parts.append("\nSeller Information:")
+            if seller.get("name"):
+                context_parts.append(f"Name: {seller['name']}")
+            if seller.get("gstin"):
+                context_parts.append(f"GSTIN: {seller['gstin']}")
+            if seller.get("address"):
+                context_parts.append(f"Address: {seller['address']}")
+        
+        # Items
+        items = data_dict.get("items", [])
+        if items:
+            context_parts.append("\nItems:")
+            for idx, item in enumerate(items, 1):
+                if isinstance(item, dict):
+                    context_parts.append(f"  {idx}. {item.get('item_name', 'N/A')}")
+                    context_parts.append(f"     HSN/SAC: {item.get('hsn_sac', 'N/A')}")
+                    context_parts.append(f"     Quantity: {item.get('quantity', 'N/A')}")
+                    context_parts.append(f"     Gross Amount: ₹{item.get('gross_amount', 'N/A')}")
+                    if item.get('discount'):
+                        context_parts.append(f"     Discount: ₹{item.get('discount')}")
+                    context_parts.append(f"     Taxable Value: ₹{item.get('taxable_value', 'N/A')}")
+                    context_parts.append(f"     CGST: ₹{item.get('cgst', 'N/A')}")
+                    context_parts.append(f"     SGST: ₹{item.get('sgst', 'N/A')}")
+                    context_parts.append(f"     IGST: ₹{item.get('igst', 'N/A')}")
+                    context_parts.append(f"     Total Amount: ₹{item.get('total_amount', 'N/A')}\n")
+        
+        # Summary
+        summary = data_dict.get("summary", {})
+        if summary:
+            context_parts.append("\nBill Summary:")
+            context_parts.append(f"Subtotal: ₹{summary.get('subtotal', 'N/A')}")
+            if summary.get('cgst_total'):
+                context_parts.append(f"CGST Total: ₹{summary['cgst_total']}")
+            if summary.get('sgst_total'):
+                context_parts.append(f"SGST Total: ₹{summary['sgst_total']}")
+            if summary.get('igst_total'):
+                context_parts.append(f"IGST Total: ₹{summary['igst_total']}")
+            context_parts.append(f"Total Tax: ₹{summary.get('total_tax', 'N/A')}")
+            if summary.get('shipping_charges'):
+                context_parts.append(f"Shipping Charges: ₹{summary['shipping_charges']}")
+            context_parts.append(f"Grand Total: ₹{summary.get('grand_total', 'N/A')}")
+        
+        # Metadata
+        extraction_metadata = data_dict.get("extraction_metadata", {})
+        if extraction_metadata:
+            context_parts.append("\nMetadata:")
+            if extraction_metadata.get("source"):
+                context_parts.append(f"Source: {extraction_metadata['source']}")
+            if extraction_metadata.get("extraction_method"):
+                context_parts.append(f"Extraction Method: {extraction_metadata['extraction_method']}")
+            if extraction_metadata.get("confidence_score") is not None:
+                context_parts.append(f"Confidence Score: {extraction_metadata['confidence_score']:.2f}")
+            if extraction_metadata.get("uploaded_by"):
+                context_parts.append(f"Uploaded By: {extraction_metadata['uploaded_by']}")
+            if extraction_metadata.get("extraction_date"):
+                context_parts.append(f"Extraction Date: {extraction_metadata['extraction_date']}")
         
         return "\n".join(context_parts)
     

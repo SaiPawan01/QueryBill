@@ -6,39 +6,33 @@ from app.database import Base, engine
 
 from app.auth.routes import router as auth_router
 from app.routes.document_route import router as document_route
-from app.routes.extract_document_router import router
+from app.routes.extract_document_router import router as extract_router
 from app.routes.chat_route import router as chat_router
 
 
 # FastAPI app instance
 app = FastAPI()
 
-# CORS configuration for development
-# Check if we're in development mode (allow all localhost origins)
-# In production, set specific origins via environment variable
-is_development = os.getenv("ENVIRONMENT", "development").lower() == "development"
+# CORS configuration
+# In development, we'll explicitly list localhost origins
+origins = [
+    "http://localhost:5173",    # Vite default
+    "http://localhost:3000",    # Alternative React port
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+]
 
-if is_development:
-    # In development: allow all localhost origins (common ports)
-    # Note: Using ["*"] requires allow_credentials=False
-    # For Bearer token auth, credentials flag is not strictly needed
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],          # Allow all origins in development
-        allow_credentials=False,      # Required when using ["*"] - Bearer tokens work fine without this
-        allow_methods=["*"],          # Allow all HTTP methods
-        allow_headers=["*"],          # Allow all request headers
-    )
-else:
-    # In production: use specific origins
-    origins = os.getenv("CORS_ORIGINS", "").split(",") if os.getenv("CORS_ORIGINS") else []
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+# Add any production origins from environment variable
+if os.getenv("CORS_ORIGINS"):
+    origins.extend(os.getenv("CORS_ORIGINS").split(","))
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # creates all table in db
@@ -51,7 +45,7 @@ Base.metadata.create_all(bind=engine)
 # Routers
 app.include_router(auth_router)
 app.include_router(document_route)
-app.include_router(router)
+app.include_router(extract_router)
 app.include_router(chat_router)
 
 

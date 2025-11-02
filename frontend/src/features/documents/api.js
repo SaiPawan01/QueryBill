@@ -74,21 +74,37 @@ export async function downloadDocumentApi(docId) {
 
 
 export async function extractDocumentApi(docId) {
-  const response = await axios.post(`${API_BASE}/document/extract/${docId}`, null, {
-    headers: {
-      ...getAuthHeaders(),
-    },
-  });
-  return response.data;
+  try {
+    const response = await axios.post(`${API_BASE}/document/extract/${docId}`, null, {
+      headers: {
+        ...getAuthHeaders(),
+      },
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 404) {
+      throw new Error("Document not found");
+    }
+    throw error;
+  }
 }
 
 export async function getExtractedDocumentApi(docId) {
-  const response = await axios.get(`${API_BASE}/document/extract/${docId}`, {
-    headers: {
-      ...getAuthHeaders(),
-    },
-  });
-  return response.data;
+  try {
+    const response = await axios.get(`${API_BASE}/document/extract/${docId}`, {
+      headers: {
+        ...getAuthHeaders(),
+      },
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 404) {
+      throw new Error("Extracted data not found");
+    }
+    throw error;
+  }
 }
 
 // Chat API functions

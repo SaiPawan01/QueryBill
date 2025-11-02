@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
+import json
 from app.database import get_db
 from app.models.document import Document
 from app.models.extracted_data import ExtractedData
@@ -43,7 +44,18 @@ def get_extracted(
     ).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
+    
     data = db.query(ExtractedData).filter(ExtractedData.document_id == doc_id).first()
     if not data:
         raise HTTPException(status_code=404, detail="Extraction not found")
+    
+    # Ensure JSON fields are properly parsed
+    for field in ['customer', 'seller', 'items', 'summary', 'extraction_metadata']:
+        value = getattr(data, field)
+        if isinstance(value, str):
+            try:
+                setattr(data, field, json.loads(value))
+            except:
+                setattr(data, field, None)
+    
     return data
