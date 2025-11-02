@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Use VITE_API_URL or fallback to default backend URL
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL;
 
 function getAuthHeaders() {
   const token = localStorage.getItem("access_token");

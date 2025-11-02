@@ -110,7 +110,21 @@ const documentsSlice = createSlice({
       })
       .addCase(fetchDocuments.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload || [];
+        // Normalize different possible API response shapes into an array
+        const payload = action.payload;
+        let items = [];
+        if (Array.isArray(payload)) {
+          items = payload;
+        } else if (payload && typeof payload === 'object') {
+          // common shapes: { documents: [...] } or { items: [...] } or { data: [...] }
+          if (Array.isArray(payload.documents)) items = payload.documents;
+          else if (Array.isArray(payload.items)) items = payload.items;
+          else if (Array.isArray(payload.data)) items = payload.data;
+          else items = [];
+        } else {
+          items = [];
+        }
+        state.items = items;
       })
       .addCase(fetchDocuments.rejected, (state, action) => {
         state.loading = false;
@@ -153,7 +167,7 @@ const documentsSlice = createSlice({
 export const { setQuery, clearError } = documentsSlice.actions;
 
 const selectDocumentsState = (state) => state.documents;
-export const selectDocuments = (state) => selectDocumentsState(state).items;
+export const selectDocuments = (state) => selectDocumentsState(state).items || [];
 export const selectQuery = (state) => selectDocumentsState(state).query;
 export const selectLoading = (state) => selectDocumentsState(state).loading;
 export const selectError = (state) => selectDocumentsState(state).error;
