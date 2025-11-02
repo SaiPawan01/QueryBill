@@ -68,12 +68,11 @@ function Auth() {
         });
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.detail || 
-                          (isLogin ? "Login failed" : "Registration failed");
-      toast.error(errorMessage, {
-        position: "top-right",
-      });
-      console.log(error);
+      // Prefer backend-provided error detail fields. Fall back to generic messages.
+      const backendDetail = error.response?.data?.detail || error.response?.data?.message || error.response?.data?.error;
+      const errorMessage = backendDetail || (isLogin ? "Login failed. Please check your credentials." : "Registration failed. Please try again.");
+      toast.error(errorMessage, { position: "top-right" });
+      console.error("Auth error:", error?.response?.data ?? error.message ?? error);
     }
   };
 
