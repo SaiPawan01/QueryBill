@@ -7,7 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 
 
-function Auth() {
+function LoginPage() {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
@@ -206,4 +206,4 @@ function Auth() {
 }
 
 
-export default Auth;
+export default LoginPage;

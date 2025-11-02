@@ -1,7 +1,7 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-import Auth from './pages/auth.jsx';
+import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import PublicRoute from './components/PublicRoute.jsx';
@@ -18,7 +18,7 @@ function App() {
           path="/"
           element={
             <PublicRoute>
-              <Auth />
+              <LoginPage />
             </PublicRoute>
           }
         />
@@ -46,7 +46,7 @@ function App() {
         />
 
         {/* Fallback to login or dashboard depending on auth handled by PublicRoute at "/" */}
-        <Route path="*" element={<PublicRoute><Auth /></PublicRoute>} />
+        <Route path="*" element={<PublicRoute><LoginPage /></PublicRoute>} />
 
       </Routes>
     </Router>
