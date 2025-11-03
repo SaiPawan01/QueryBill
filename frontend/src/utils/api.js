@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Use VITE_API_URL or fallback to default backend URL
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+// Use VITE_API_URL fallback to localhost for dev
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
 
 // Create axios instance with base configuration
 const api = axios.create({
