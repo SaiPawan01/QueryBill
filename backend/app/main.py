@@ -14,17 +14,22 @@ from app.routes.chat_route import router as chat_router
 app = FastAPI()
 
 # CORS configuration
-# In development, we'll explicitly list localhost origins
-origins = [
-    "http://localhost:5173",    # Vite default
-    "http://localhost:3000",    # Alternative React port
+# Default local development origins
+default_origins = [
+    "http://localhost:5173",   
+    "http://localhost:5174",  
+    "http://localhost:3000",   
     "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
     "http://127.0.0.1:3000",
 ]
 
-# Add any production origins from environment variable
-if os.getenv("CORS_ORIGINS"):
-    origins.extend(os.getenv("CORS_ORIGINS").split(","))
+# Prefer ALLOWED_ORIGINS env var (production)
+allowed = os.getenv("ALLOWED_ORIGINS")
+if allowed:
+    origins = [o.strip() for o in allowed.split(",") if o.strip()]
+else:
+    origins = default_origins
 
 app.add_middleware(
     CORSMiddleware,
@@ -37,7 +42,6 @@ app.add_middleware(
 
 # creates all table in db
 Base.metadata.create_all(bind=engine)
-
 
 
 
