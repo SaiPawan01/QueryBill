@@ -3,12 +3,13 @@
 An end-to-end AI-powered web application that extracts structured data from utility bills and receipts (PDF/Image) and enables interactive Q&A with the extracted information via an AI chat interface.
 Built using **React, FastAPI, PostgreSQL**, and **LangChain/LangGraph** with full Docker support.
 
-## 🌐 Live Links
+## 🌐 Links
 
 **Application Link:** [http://13.233.102.26/](http://13.233.102.26/)
 
-
 **API Documentation:** [http://13.233.102.26/docs](http://13.233.102.26:8000/docs)
+
+
 
 ## 🧩 Architecture
 
@@ -17,7 +18,7 @@ Built using **React, FastAPI, PostgreSQL**, and **LangChain/LangGraph** with ful
 | -------------------- | ----------------------------------------------- |
 | **Frontend**       | React.js, Redux, Tailwind CSS                 |
 | **Backend**        | Python, FastAPI, REST API, JWT Authentication |
-| **Database**       | PostgreSQL (with user-document relationships) |
+| **Database**       | PostgreSQL (Supabase deployment) |
 | **AI Layer**       | LangChain / Gemini                            |
 | **Authentication** | JWT, bcrypt                                   |
 | **Deployment**     | Docker, Docker Compose, AWS EC2               |
@@ -75,6 +76,7 @@ Built using **React, FastAPI, PostgreSQL**, and **LangChain/LangGraph** with ful
 ### 2. **Frontend Development**
 
 - Built with React and Redux for state management.
+- Developed a **dashboard page** to upload and manage the documents.
 - Developed a **three-panel layout**:
 
   - **Left Panel:** Document Viewer with zoom/pan and multi-page support.
@@ -90,7 +92,7 @@ Built using **React, FastAPI, PostgreSQL**, and **LangChain/LangGraph** with ful
 
 ### 4. **AI Integration**
 
-- Implemented **OCR-based extraction pipelines using EasyOCR** to extract raw text from utility bills and receipts (PDF/Image).
+- Implemented **OCR-based extraction pipelines using EasyOCR** extract raw text from utility bills and receipts (PDF/Image).
 - Passed the extracted text to **Gemini LLM** for intelligent **structured data extraction** into JSON format.
 - Parsed and organized the JSON output into key-value pairs for essential fields such as **invoice number, customer name, dates, total amount**, etc.
 - Built **Q&A logic** that references the extracted JSON fields for context-aware conversational responses.
@@ -100,31 +102,110 @@ Built using **React, FastAPI, PostgreSQL**, and **LangChain/LangGraph** with ful
 - Created **Dockerfiles** for frontend and backend.
 - Configured **docker-compose.yml** for local and cloud orchestration.
 - Deployed the app to **AWS EC2** with proper environment variables.
+- Hosted the database in Supabase by running sql schema scripts"
 
 ---
 
 ## ⚙️ Challenges Faced and Solutions
 
 
-| Challenge                                             | Solution                                                              |
-| ------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Need to update  | need to update |
+| Challenge      | Solution       |
+| ---------------- | ---------------- |
+| Faced CORS error | Configured FastAPI `CORSMiddleware` with allowed origins and updated frontend API URL. |
+| Database migration | Hosted the database on Supabase and executed the SQL schema script for quick setup. |
+| Pytesseract import error | Switched to EasyOCR for smoother text extraction without dependency issues. |
+| No standard schema for utility bills | Designed a detailed utility bill schema to capture all essential information. |
+| Python dependency conflicts | Resolved by installing correct dependency versions and specifying them in `requirements.txt`. |
+| Document upload functionality timed out | Increased request timeout limits in `nginx.conf`|
+| Database schema export error in pgAdmin | Resolved by taking a backup of the database without including data. |
+
+
+
+
 
 
 ## 📸 Screenshots
 
 ### 🟦 **Login Page**
 
-![Login Page](./screenshots/Login.jpg)
+![Login Page](./frontend/assets/Login.jpg)
 
 ### 🟩 **Sign-Up Page**
 
-![Sign-Up Page](./screenshots/Signup.jpg)
+![Sign-Up Page](./frontend/assets/Signup.jpg)
 
 ### 🧾 **Dashboard**
 
-![Dashboard](./screenshots/Dashboard.png)
+![Dashboard](./frontend/assets/Dashboard.png)
 
 ### 🪟 **Three-Panel Layout**
 
-![Three-Panel Layout](./screenshots/ThreePanelPage.jpg)
+![Three-Panel Layout](./frontend/assets/ThreePanelPage.jpg)
+
+## ⚙️ Setup & Installation
+
+##### Clone Repository
+
+clone the repository
+
+```bash
+git clone https://github.com/SaiPawan01/QueryBill.git
+cd QueryBill
+```
+
+##### Envirnoment Variables
+
+Create a .env file in both frontend and backend folders.
+
+###### 🖥️ Frontend (.env)
+
+```bash
+VITE_API_URL=http://<your-ec2-ip>
+```
+
+###### ⚙️ Backend (.env)
+
+```bash
+# Allowed Origins
+ALLOWED_ORIGINS=http://localhost:5173
+
+# Database Configuration
+SQLALCHEMY_DATABASE_URL=postgresql+psycopg2://postgres:password@db:5432/querybill
+
+# JWT Authentication
+JWT_SECRET_KEY=your_jwt_secret_key
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+
+# AI Keys
+GEMINI_API_KEY=your_gemini_api_key
+
+```
+
+##### Run Without Docker (Manual Setup)
+
+If you prefer to run the project locally without Docker:
+
+###### 🖥️ Backend Setup
+
+cd backend
+python -m venv .venv
+.venv/Scripts/activate    # ( on Windows)
+pip install -r requirements.txt
+
+uvicorn app.main:app --reload
+
+###### 💻 Frontend Setup
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+##### 🚀Access the app locally:
+
+```bash
+Frontend → http://localhost:5173
+Backend → http://localhost:8000/docs
+```
