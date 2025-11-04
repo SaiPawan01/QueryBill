@@ -25,8 +25,9 @@ default_origins = [
 ]
 
 # Prefer ALLOWED_ORIGINS env var (production)
-allowed = os.getenv("ALLOWED_ORIGINS")
-if allowed:
+DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE")
+if DEVELOPMENT_MODE == "true":
+    allowed = os.getenv("ALLOWED_ORIGINS")
     origins = [o.strip() for o in allowed.split(",") if o.strip()]
 else:
     origins = default_origins

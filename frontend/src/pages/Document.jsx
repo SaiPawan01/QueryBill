@@ -74,8 +74,9 @@ function Document() {
     <div className="h-[75vh] bg-gray-50">
       <div className="px-4 py-4">
         <div className="flex items-center justify-between mb-3">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-800">{docName ? docName : `Document #${id}`}</h1>
+          <div className='flex gap-1'>
+            <h1 className='text-xl font-semibold text-gray-800'>File Name : </h1>
+            <h1 className="text-xl font-semibold text-gray-600">{docName ? docName :`Document #${id}`}</h1>
             {/* {data && (
               <div className="text-sm text-gray-500 mt-1">Extracted: {data?.extraction_metadata?.extraction_date ? formatDate(data.extraction_metadata.extraction_date) : formatDate(data.created_at)}</div>
             )} */}

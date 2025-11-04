@@ -1,0 +1,27 @@
+/* Center the toast container with containerId="center" */
+.Toastify__toast-container.toast-center {
+	/* Position at the true center of viewport */
+	top: 50% !important;
+	left: 50% !important;
+	right: auto !important;
+	bottom: auto !important;
+	transform: translate(-50%, -50%) !important;
+	width: auto !important;
+	max-width: 96vw !important;
+	display: flex !important;
+	justify-content: center !important;
+	align-items: center !important;
+	pointer-events: none; /* allow clicks to pass through outside the toast */
+	z-index: 9999;
+}
+
+/* Make the toast itself accept pointer events so buttons inside are clickable */
+.Toastify__toast-container.toast-center .Toastify__toast {
+	pointer-events: auto;
+}
+
+/* Slight visual tweak to keep confirm content compact */
+.Toastify__toast-container.toast-center .Toastify__toast {
+	padding: 12px 14px;
+	border-radius: 8px;
+}

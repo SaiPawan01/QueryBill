@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { updateExtractedDocumentApi } from '../../features/documents/api'
+import { toast } from 'react-toastify'
 
 function Field({ label, value, onChange, status, type = "text", disabled = false }) {
   const border = status === 'valid' ? 'border-green-300' : status === 'warn' ? 'border-yellow-300' : status === 'error' ? 'border-red-300' : 'border-gray-300';
@@ -123,12 +124,48 @@ export default function ExtractedDataPanel({ id, data, onFieldChange, onLineItem
       await updateExtractedDocumentApi(id, modifiedData);
       setEditMode(false);
       setModifiedData({});
+      toast.success('Changes saved');
     } catch (error) {
       console.error('Failed to save changes:', error);
-      alert('Failed to save changes. Please try again.');
+      toast.error(error?.message || 'Failed to save changes. Please try again.');
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const requestSave = () => {
+    const toastId = `confirm-save-${id}`;
+
+    const handleConfirm = async () => {
+      toast.dismiss(toastId);
+      await handleSave();
+    };
+
+    const handleCancel = () => {
+      toast.dismiss(toastId);
+    };
+
+    const ConfirmContent = (
+      <div className="flex flex-col gap-3">
+        <div className="text-sm">Save changes to this document?</div>
+        <div className="flex gap-2">
+          <button
+            onClick={handleConfirm}
+            className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-md"
+          >
+            Save
+          </button>
+          <button
+            onClick={handleCancel}
+            className="px-3 py-1.5 text-sm bg-gray-200 rounded-md"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+
+    toast.info(ConfirmContent, { toastId, containerId: 'center', autoClose: false, closeOnClick: false, closeButton: false });
   };
 
   const exportJson = () => {
@@ -360,7 +397,7 @@ export default function ExtractedDataPanel({ id, data, onFieldChange, onLineItem
         <button 
           type="button" 
           className={`w-full py-2 ${editMode ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded text-sm`}
-          onClick={editMode ? handleSave : () => setEditMode(true)}
+          onClick={editMode ? requestSave : () => setEditMode(true)}
           disabled={editMode && isSaving}
         >
           {editMode ? (isSaving ? 'Saving...' : 'Save Changes') : 'Edit'}

@@ -17,6 +17,7 @@ import { downloadDocumentApi } from '../features/documents/api'
 import Spinner from '../components/Spinner'
 import DocumentFilter from '../components/dashboard/DocumentFilter'
 import DocumentList from '../components/dashboard/DocumentList'
+import { toast } from 'react-toastify'
 
 function Dashboard() {
   const dispatch = useDispatch();
@@ -73,10 +74,46 @@ function Dashboard() {
     }
   };
 
-  const onDelete = async (id) => {
-    try {
-      await dispatch(deleteDocument(id)).unwrap();
-    } catch (_) {}
+  const onDelete = (id) => {
+    const doc = documents.find((d) => d.id === id) || { id, name: `Document ${id}` };
+    const toastId = `confirm-delete-${id}`;
+
+    const handleConfirm = async () => {
+      // dismiss the confirmation toast first
+      toast.dismiss(toastId);
+      try {
+        await dispatch(deleteDocument(id)).unwrap();
+        toast.success('Document deleted');
+      } catch (error) {
+        toast.error(error?.message || 'Failed to delete document');
+      }
+    };
+
+    const handleCancel = () => {
+      toast.dismiss(toastId);
+    };
+
+    const ConfirmContent = (
+      <div className="flex flex-col gap-3">
+        <div className="text-sm">Delete <strong>{doc.name}</strong>?</div>
+        <div className="flex gap-2">
+          <button
+            onClick={handleConfirm}
+            className="px-3 py-1.5 text-sm bg-red-600 text-white rounded-md"
+          >
+            Delete
+          </button>
+          <button
+            onClick={handleCancel}
+            className="px-3 py-1.5 text-sm bg-gray-200 rounded-md"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+
+    toast.info(ConfirmContent, { toastId, containerId: 'center', autoClose: false, closeOnClick: false, closeButton: false });
   };
 
   const onDownload = async (doc) => {
