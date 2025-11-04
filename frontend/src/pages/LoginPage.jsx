@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { authAPI } from "../utils/api";
 
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
 
 
 
@@ -53,6 +52,7 @@ function LoginPage() {
         }
         toast.success("Login successful!", {
           position: "top-right",
+          autoClose: 1000,
         });
         navigate("/dashboard");
       } else {
@@ -80,22 +80,25 @@ function LoginPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         {/* Brand Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+        <div className="text-center mb-6">
+          <h1 className="text-4xl md:text-5xl font-extrabold mb-3 bg-linear-to-r from-blue-600 via-purple-500 to-indigo-600 bg-clip-text text-transparent">
             QueryBill
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            {isLogin ? "Welcome back" : "Create your account"}
-          </p>
+          <div className="sm:block text-sm font-medium tracking-wide text-gray-600 dark:text-gray-300 mb-4">
+            Smart extraction & Q&A
+          </div>
+          {/* <p className="text-lg text-gray-600 dark:text-gray-400 font-medium">
+            {isLogin ? "Welcome back! 👋" : "Create your account ✨"}
+          </p> */}
         </div>
 
         <form
           onSubmit={handleSubmit}
           className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-8 border dark:border-gray-700"
         >
-          <h2 className="text-2xl font-semibold text-center mb-6 text-gray-800 dark:text-gray-100">
+          {/* <h2 className="text-2xl font-semibold text-center mb-6 text-gray-800 dark:text-gray-100">
             {isLogin ? "Sign In" : "Sign Up"}
-          </h2>
+          </h2> */}
 
           {!isLogin && (
             <div className="grid grid-cols-2 gap-4 mb-4">
@@ -189,17 +192,6 @@ function LoginPage() {
           </p>
         </div>
 
-        <ToastContainer 
-          position="top-right"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-        />
       </div>
     </div>
   );

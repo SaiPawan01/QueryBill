@@ -1,5 +1,7 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard.jsx';
@@ -11,6 +13,7 @@ import Layout from './components/Layout.jsx';
 function App() {
   return (
     <Router>
+      <ToastContainer position="top-right" />
       <Routes>
 
         {/* Public route (redirects to /dashboard if already authenticated) */}

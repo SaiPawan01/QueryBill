@@ -7,7 +7,7 @@ function Layout({ children }) {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-50">
       <Navbar />
       {/* <Breadcrumbs /> */}
-      <main className=" mx-auto px-4 pb-12">
+      <main className="pt-16 mx-auto px-4 pb-12">
         {children}
       </main>
     </div>

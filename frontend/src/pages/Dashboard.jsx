@@ -14,6 +14,9 @@ import {
 import { archiveDocument, unarchiveDocument } from '../features/documents/documentsSlice'
 import { Link } from 'react-router-dom'
 import { downloadDocumentApi } from '../features/documents/api'
+import Spinner from '../components/Spinner'
+import DocumentFilter from '../components/dashboard/DocumentFilter'
+import DocumentList from '../components/dashboard/DocumentList'
 
 function Dashboard() {
   const dispatch = useDispatch();
@@ -30,21 +33,21 @@ function Dashboard() {
     dispatch(fetchDocuments());
   }, [dispatch]);
 
-  const onSearchChange = (e) => {
-    const v = e.target.value || '';
+  const onSearchChange = (value) => {
+    const v = value || '';
     dispatch(setQuery(v));
     // server side search too (keeps server and client in sync)
     dispatch(fetchDocuments({ q: v, status_filter: statusFilter === 'all' ? undefined : statusFilter, file_type: typeFilter === 'all' ? undefined : typeFilter }));
   };
 
-  const onStatusChange = (e) => {
-    const v = e.target.value;
+  const onStatusChange = (value) => {
+    const v = value;
     setStatusFilter(v);
     dispatch(fetchDocuments({ q: undefined, status_filter: v === 'all' ? undefined : v, file_type: typeFilter === 'all' ? undefined : typeFilter }));
   };
 
-  const onTypeChange = (e) => {
-    const v = e.target.value;
+  const onTypeChange = (value) => {
+    const v = value;
     setTypeFilter(v);
     dispatch(fetchDocuments({ q: undefined, status_filter: statusFilter === 'all' ? undefined : statusFilter, file_type: v === 'all' ? undefined : v }));
   };
@@ -79,25 +82,53 @@ function Dashboard() {
   const onDownload = async (doc) => {
     try {
       const response = await downloadDocumentApi(doc.id);
-      const blob = new Blob([response.data]);
+      // Get the filename from the content-disposition header if available
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = doc.name || `document_${doc.id}`;
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, '');
+        }
+      }
+
+      // Get the content type from the response
+      const contentType = response.headers['content-type'] || 'application/octet-stream';
+      
+      // Create blob with the correct type
+      const blob = new Blob([response.data], { type: contentType });
+      
+      // Create object URL
       const url = window.URL.createObjectURL(blob);
+      
+      // Create and trigger download
       const a = document.createElement('a');
+      a.style.display = 'none';
       a.href = url;
-      a.download = doc.name || `document_${doc.id}`;
+      a.download = filename;
+      
       document.body.appendChild(a);
       a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (_) {
-      // error surfaced elsewhere if needed
+      
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Failed to download the document. Please try again.');
     }
   };
 
   return (
     <div className="h-[80vh] bg-gray-50">
+      {uploading && (
+        <Spinner message={"📤 Uploading your file… this might take a few moments.⏳"} />
+      )}
       <div className="max-w-5xl mx-auto px-2 sm:px-4 py-4 sm:py-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0 mb-6">
-          <h1 className="text-xl sm:text-2xl font-semibold text-gray-800">Your Documents</h1>
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-gray-900">Manage your utility bills</h1>
           <button
             onClick={triggerFilePick}
             disabled={uploading}
@@ -114,115 +145,49 @@ function Dashboard() {
           />
         </div>
 
-        <div className="mb-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="text"
-              placeholder="Search documents…"
-              onChange={onSearchChange}
-              className="w-full sm:w-auto flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-            <div className="flex gap-3 sm:flex-none">
-              <select value={statusFilter} onChange={onStatusChange} className="w-1/2 sm:w-auto px-3 py-2 border rounded-md">
-                <option value="all">All</option>
-                <option value="active">Active</option>
-                <option value="archived">Archived</option>
-              </select>
-              <select value={typeFilter} onChange={onTypeChange} className="w-1/2 sm:w-auto px-3 py-2 border rounded-md">
-                <option value="all">All</option>
-                <option value="pdf">PDF</option>
-                <option value="image">Image</option>
-              </select>
-            </div>
-          </div>
-        </div>
+        <DocumentFilter
+          onSearchChange={onSearchChange}
+          status={statusFilter}
+          onStatusChange={onStatusChange}
+          type={typeFilter}
+          onTypeChange={onTypeChange}
+          disabled={uploading}
+        />
 
         {error && (
           <div className="mb-4 text-sm text-red-600">{error}</div>
         )}
 
         <div className="bg-white rounded-lg shadow">
-          {/* Desktop Header */}
-          <div className="hidden sm:grid grid-cols-12 px-4 py-3 text-sm font-medium text-gray-500 border-b">
-            <div className="col-span-4">Name</div>
-            <div className="col-span-2">Size</div>
-            <div className="col-span-2">Uploaded</div>
-            <div className="col-span-4 text-right">Actions</div>
-          </div>
-          {loading ? (
-            <div className="p-6 text-gray-500">Loading…</div>
-          ) : documents.length === 0 ? (
-            <div className="p-6 text-gray-500">No documents found.</div>
-          ) : (
-            <ul>
-              {documents.map((doc) => (
-                <li key={doc.id} className="flex flex-col sm:grid sm:grid-cols-12 items-start sm:items-center px-4 py-3 border-b last:border-b-0">
-                  <div className="w-full sm:col-span-4 truncate text-gray-800 mb-2 sm:mb-0">
-                    <Link to={`/documents/${doc.id}`} className="text-blue-600 hover:underline">
-                      {doc.name}
-                    </Link>
-                    {/* Mobile metadata */}
-                    <div className="flex gap-4 text-sm text-gray-500 mt-1 sm:hidden">
-                      <span>{Math.round((doc.size || 0) / 1024)} KB</span>
-                      <span>{formatDate(doc.uploaded_at)}</span>
-                    </div>
-                  </div>
-                  {/* Desktop metadata */}
-                  <div className="hidden sm:block sm:col-span-2 text-gray-600">{Math.round((doc.size || 0) / 1024)} KB</div>
-                  <div className="hidden sm:block sm:col-span-2 text-gray-600">{formatDate(doc.uploaded_at)}</div>
-                  <div className="w-full sm:w-auto sm:col-span-4 flex flex-wrap sm:justify-end gap-2">
-                    <button
-                      onClick={() => onDownload(doc)}
-                      className="flex-1 sm:flex-initial px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-md text-gray-800 text-center"
-                    >
-                      Download
-                    </button>
-                    {doc.status === 'archived' ? (
-                      <button
-                        onClick={async () => {
-                          try {
-                            await dispatch(unarchiveDocument(doc.id)).unwrap();
-                            dispatch(fetchDocuments({
-                              status_filter: statusFilter === 'all' ? undefined : statusFilter,
-                              file_type: typeFilter === 'all' ? undefined : typeFilter
-                            }));
-                          } catch (error) {
-                            // Error handled in slice
-                          }
-                        }}
-                        className="flex-1 sm:flex-initial px-3 py-1.5 text-sm bg-green-50 hover:bg-green-100 rounded-md text-green-700 text-center"
-                      >
-                        Restore
-                      </button>
-                    ) : (
-                      <button
-                        onClick={async () => {
-                          try {
-                            await dispatch(archiveDocument(doc.id)).unwrap();
-                            dispatch(fetchDocuments({
-                              status_filter: statusFilter === 'all' ? undefined : statusFilter,
-                              file_type: typeFilter === 'all' ? undefined : typeFilter
-                            }));
-                          } catch (error) {
-                            // Error handled in slice
-                          }
-                        }}
-                        className="flex-1 sm:flex-initial px-3 py-1.5 text-sm bg-yellow-50 hover:bg-yellow-100 rounded-md text-yellow-700 text-center"
-                      >
-                        Archive
-                      </button>
-                    )}
-                    <button
-                      onClick={() => onDelete(doc.id)}
-                      className="flex-1 sm:flex-initial px-3 py-1.5 text-sm bg-red-50 hover:bg-red-100 rounded-md text-red-700 text-center"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
+          <DocumentList
+            documents={documents}
+            loading={loading}
+            onDownload={onDownload}
+            onArchive={async (id) => {
+              try {
+                await dispatch(archiveDocument(id)).unwrap();
+                dispatch(fetchDocuments({
+                  status_filter: statusFilter === 'all' ? undefined : statusFilter,
+                  file_type: typeFilter === 'all' ? undefined : typeFilter
+                }));
+              } catch (error) {
+                // handled in slice
+              }
+            }}
+            onRestore={async (id) => {
+              try {
+                await dispatch(unarchiveDocument(id)).unwrap();
+                dispatch(fetchDocuments({
+                  status_filter: statusFilter === 'all' ? undefined : statusFilter,
+                  file_type: typeFilter === 'all' ? undefined : typeFilter
+                }));
+              } catch (error) {
+                // handled in slice
+              }
+            }}
+            onDelete={onDelete}
+            disabled={uploading}
+          />
         </div>
       </div>
     </div>

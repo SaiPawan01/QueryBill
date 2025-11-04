@@ -63,13 +63,35 @@ export function getDownloadUrl(docId) {
 }
 
 export async function downloadDocumentApi(docId) {
-  const response = await axios.get(`${API_BASE}/documents/${docId}`, {
-    headers: {
-      ...getAuthHeaders(),
-    },
-    responseType: "blob",
-  });
-  return response;
+  try {
+    const response = await axios.get(`${API_BASE}/documents/${docId}`, {
+      headers: {
+        ...getAuthHeaders(),
+        'Accept': '*/*',  // Accept any content type
+      },
+      responseType: 'blob',
+      timeout: 30000, // 30 second timeout
+    });
+    
+    // Verify that we received data
+    if (!response.data || response.data.size === 0) {
+      throw new Error('Received empty file');
+    }
+    
+    return response;
+  } catch (error) {
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      throw new Error(error.response.status === 404 ? 'Document not found' : 'Failed to download document');
+    } else if (error.request) {
+      // The request was made but no response was received
+      throw new Error('No response received from server');
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      throw new Error('Failed to initiate download');
+    }
+  }
 }
 
 

@@ -11,6 +11,7 @@ from app.models.extracted_data import ExtractedData
 
 import easyocr
 import pdfplumber
+import re
 
 from dotenv import load_dotenv
 
@@ -18,6 +19,8 @@ load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", api_key=GEMINI_API_KEY, temperature=0)
+
+
 
 class ExtractionService:
     # Lazy initialization of EasyOCR reader to avoid slow startup
@@ -114,22 +117,32 @@ class ExtractionService:
             response = llm.invoke([message])
             text = response.content.strip()
             
-            # Clean up the response
-            # Remove markdown code block markers if present
+            # Clean up the response: strip common codeblock markers
             if text.startswith("```json"):
                 text = text[7:]
             elif text.startswith("```"):
                 text = text[3:]
             if text.endswith("```"):
                 text = text[:-3]
-            
-            # Parse and validate JSON
+
+            # Try to extract first JSON object/array from the response (robust against extra text)
             json_text = text.strip()
-            extracted_data = json.loads(json_text)
-            
-            # Validate that it's a dictionary
+            match = re.search(r'(\{[\s\S]*\}|\[[\s\S]*\])', json_text)
+            if match:
+                json_text = match.group(1)
+
+            try:
+                extracted_data = json.loads(json_text)
+            except json.JSONDecodeError as e:
+                # Raise including raw response so caller/logs can inspect cause
+                raise RuntimeError(f"Failed to parse LLM response as JSON: {str(e)}; raw_response={text}")
+
+            # Accept a list with a single dict as fallback (some LLMs return arrays)
             if not isinstance(extracted_data, dict):
-                raise ValueError("Extracted data must be a dictionary")
+                if isinstance(extracted_data, list) and len(extracted_data) > 0 and isinstance(extracted_data[0], dict):
+                    extracted_data = extracted_data[0]
+                else:
+                    raise ValueError(f"Extracted data must be a dictionary; got {type(extracted_data)}; raw_response={text}")
             
             # Ensure required fields exist with proper types
             extracted_data.setdefault('items', [])
@@ -151,8 +164,10 @@ class ExtractionService:
             return extracted_data
             
         except json.JSONDecodeError as e:
+            # Already handled above, but keep a safe fallback
             raise RuntimeError(f"Failed to parse LLM response as JSON: {str(e)}")
         except Exception as e:
+            # Raise with message so caller gets context
             raise RuntimeError(f"Error during extraction: {str(e)}")
 
     @classmethod

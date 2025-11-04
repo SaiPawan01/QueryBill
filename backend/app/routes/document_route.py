@@ -8,6 +8,7 @@ from typing import Optional
 from app.models.document import Document
 from app.auth.routes import get_current_user
 from app.database import get_db
+from sqlalchemy import text
 
 
 
@@ -24,13 +25,14 @@ def validate_file(file: UploadFile):
         return False, "Filename is required"
     ext = Path(file.filename).suffix.lower()
     allowed = {".pdf", ".jpg", ".jpeg", ".png"}
-    mime_allowed = {"application/pdf", "image/jpeg", "image/png"}
+    mime_allowed = {"application/pdf", "image/jpeg","image/jpg","image/png"}
     
     if ext not in allowed:
         return False, "Invalid file type"
     if file.content_type not in mime_allowed:
         return False, "Invalid MIME type"
     return True, None
+
 
 
 
@@ -157,16 +159,44 @@ async def get_doc(doc_id: int, user = Depends(get_current_user), db: Session = D
 
 @router.delete("/{doc_id}")
 async def delete_doc(doc_id: int, user = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Delete a document and its associated chat messages."""
+    
+    # First check if document exists and belongs to user
     doc = db.query(Document).filter(Document.id == doc_id, Document.user_id == user.id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     
-    if os.path.exists(doc.file_path):
-        os.remove(doc.file_path)
-    db.delete(doc)
-    db.commit()
-    return {"message": "Deleted"}
-
+    try:
+        # Delete associated chat messages first
+        db.execute(
+            text("DELETE FROM chat_messages WHERE document_id = :doc_id"), 
+            {"doc_id": doc_id}
+        )
+        
+        # Delete the document from database
+        db.delete(doc)
+        
+        # Try to delete the physical file
+        if os.path.exists(doc.file_path):
+            try:
+                os.remove(doc.file_path)
+            except Exception as e:
+                # Log file deletion error but continue with DB commit
+                print(f"Error deleting file {doc.file_path}: {str(e)}")
+        
+        # Commit all changes
+        db.commit()
+        
+        return {"message": "Document and associated data deleted successfully"}
+        
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to delete document: {str(e)}"
+        )
 
 
 @router.post("/archive/{doc_id}")

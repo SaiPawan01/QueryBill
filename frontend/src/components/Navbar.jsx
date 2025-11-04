@@ -23,9 +23,12 @@ function Navbar() {
   };
 
   return (
-    <header className="top-0 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b">
+    <header className="fixed top-0 w-full z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b">
       <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-        <div className="font-semibold text-gray-800 dark:text-gray-100">QueryBill</div>
+        <div className="flex items-center gap-3">
+          <div className="text-2xl sm:text-3xl font-extrabold bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">QueryBill</div>
+          <div className="hidden sm:block text-xs text-gray-500">Smart extraction & Q&A</div>
+        </div>
         <div className="flex items-center gap-3">
           {userName && (
             <div className="text-sm text-gray-700 dark:text-gray-200 mr-2">{userName}</div>
