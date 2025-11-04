@@ -52,7 +52,7 @@ function LoginPage() {
         }
         toast.success("Login successful!", {
           position: "top-right",
-          autoClose: 1000,
+          autoClose: 3000,
         });
         navigate("/dashboard");
       } else {
@@ -103,10 +103,11 @@ function LoginPage() {
           {!isLogin && (
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
+                <label htmlFor="first-name-input" className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
                   First Name
                 </label>
                 <input
+                  id="first-name-input"
                   type="text"
                   name="first_name"
                   value={formData.first_name}
@@ -118,10 +119,11 @@ function LoginPage() {
               </div>
 
               <div>
-                <label className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
+                <label htmlFor="last-name-input" className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
                   Last Name
                 </label>
                 <input
+                  id="last-name-input"
                   type="text"
                   name="last_name"
                   value={formData.last_name}
@@ -135,10 +137,11 @@ function LoginPage() {
           )}
 
           <div className="mb-4">
-            <label className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
+            <label htmlFor="email-input" className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
               Email Address
             </label>
             <input
+              id="email-input"
               type="email"
               name="email_id"
               value={formData.email_id}
@@ -150,10 +153,11 @@ function LoginPage() {
           </div>
 
           <div className="mb-6">
-            <label className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
+            <label htmlFor="password-input" className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
               Password
             </label>
             <input
+              id="password-input"
               type="password"
               name="password"
               value={formData.password}

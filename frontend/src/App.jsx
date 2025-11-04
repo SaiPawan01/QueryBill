@@ -29,7 +29,10 @@ function App() {
         <Route
           path="/"
           element={
+            <PublicRoute>
               <LoginPage />
+            </PublicRoute>
+              
           }
         />
 
