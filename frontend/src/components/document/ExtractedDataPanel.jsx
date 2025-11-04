@@ -91,10 +91,34 @@ export default function ExtractedDataPanel({ id, data, onFieldChange, onLineItem
   const [modifiedData, setModifiedData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
 
+  // Helper to read current value, merging modified data with original data for nested objects
+  const getFieldValue = (field, parentField = null) => {
+    if (parentField) {
+      // For nested objects (customer, seller, summary), merge original with modifications
+      const originalData = data?.[parentField] || {};
+      const modifiedDataForParent = modifiedData[parentField] || {};
+      const mergedData = { ...originalData, ...modifiedDataForParent };
+      return mergedData[field];
+    }
+    // For top-level fields
+    if (modifiedData[field] !== undefined) return modifiedData[field];
+    return data?.[field];
+  };
+
+  const getLineItemValue = (idx, field) => {
+    if (modifiedData.items && modifiedData.items[idx] && modifiedData.items[idx][field] !== undefined) {
+      return modifiedData.items[idx][field];
+    }
+    return data?.items?.[idx]?.[field];
+  };
+
   const handleFieldChange = (field, value, parentField = null) => {
     const newModifiedData = { ...modifiedData };
     if (parentField) {
+      // For nested objects, merge with original data to preserve unedited fields
+      const originalData = data?.[parentField] || {};
       newModifiedData[parentField] = {
+        ...originalData,
         ...(newModifiedData[parentField] || {}),
         [field]: value
       };
@@ -121,9 +145,16 @@ export default function ExtractedDataPanel({ id, data, onFieldChange, onLineItem
   const handleSave = async () => {
     try {
       setIsSaving(true);
-      await updateExtractedDocumentApi(id, modifiedData);
+      const updatedData = await updateExtractedDocumentApi(id, modifiedData);
+      // Clear local edit state
       setEditMode(false);
       setModifiedData({});
+      
+      // Force parent to refetch latest data
+      if (onFieldChange) {
+        onFieldChange('_forceRefetch', Date.now());
+      }
+      
       toast.success('Changes saved');
     } catch (error) {
       console.error('Failed to save changes:', error);
@@ -208,18 +239,18 @@ export default function ExtractedDataPanel({ id, data, onFieldChange, onLineItem
         {/* Basic Bill Information */}
         <div className="space-y-3">
           <div className="text-sm font-medium text-gray-700">Basic Information</div>
-          <Field label="Bill ID" value={data.bill_id} onChange={(v) => handleFieldChange('bill_id', v)} status={validity.text(data.bill_id)} disabled={!editMode} />
-          <Field label="Bill Type" value={data.bill_type} onChange={(v) => handleFieldChange('bill_type', v)} status={validity.text(data.bill_type)} disabled={!editMode} />
-          <Field label="Invoice Number" value={data.invoice_number} onChange={(v) => handleFieldChange('invoice_number', v)} status={validity.text(data.invoice_number)} disabled={!editMode} />
-          <Field label="Order ID" value={data.order_id} onChange={(v) => handleFieldChange('order_id', v)} status={validity.text(data.order_id)} disabled={!editMode} />
+          <Field label="Bill ID" value={getFieldValue('bill_id')} onChange={(v) => handleFieldChange('bill_id', v)} status={validity.text(getFieldValue('bill_id'))} disabled={!editMode} />
+          <Field label="Bill Type" value={getFieldValue('bill_type')} onChange={(v) => handleFieldChange('bill_type', v)} status={validity.text(getFieldValue('bill_type'))} disabled={!editMode} />
+          <Field label="Invoice Number" value={getFieldValue('invoice_number')} onChange={(v) => handleFieldChange('invoice_number', v)} status={validity.text(getFieldValue('invoice_number'))} disabled={!editMode} />
+          <Field label="Order ID" value={getFieldValue('order_id')} onChange={(v) => handleFieldChange('order_id', v)} status={validity.text(getFieldValue('order_id'))} disabled={!editMode} />
         </div>
 
         {/* Dates */}
         <div className="space-y-3">
           <div className="text-sm font-medium text-gray-700">Dates</div>
-          <Field label="Order Date" value={data.order_date} onChange={(v) => handleFieldChange('order_date', v)} status={validity.date(data.order_date)} type="date" disabled={!editMode} />
-          <Field label="Invoice Date" value={data.invoice_date} onChange={(v) => handleFieldChange('invoice_date', v)} status={validity.date(data.invoice_date)} type="date" disabled={!editMode} />
-          <Field label="Due Date" value={data.due_date} onChange={(v) => handleFieldChange('due_date', v)} status={validity.date(data.due_date)} type="date" disabled={!editMode} />
+          <Field label="Order Date" value={getFieldValue('order_date')} onChange={(v) => handleFieldChange('order_date', v)} status={validity.date(getFieldValue('order_date'))} type="date" disabled={!editMode} />
+          <Field label="Invoice Date" value={getFieldValue('invoice_date')} onChange={(v) => handleFieldChange('invoice_date', v)} status={validity.date(getFieldValue('invoice_date'))} type="date" disabled={!editMode} />
+          <Field label="Due Date" value={getFieldValue('due_date')} onChange={(v) => handleFieldChange('due_date', v)} status={validity.date(getFieldValue('due_date'))} type="date" disabled={!editMode} />
         </div>
 
         {/* Customer Details */}
@@ -227,16 +258,16 @@ export default function ExtractedDataPanel({ id, data, onFieldChange, onLineItem
           <div className="text-sm font-medium text-gray-700">Customer Details</div>
           <Field 
             label="Customer Name" 
-            value={data.customer?.name} 
+            value={getFieldValue('name', 'customer')} 
             onChange={(v) => handleFieldChange('name', v, 'customer')} 
-            status={validity.text(data.customer?.name)}
+            status={validity.text(getFieldValue('name', 'customer'))}
             disabled={!editMode}
           />
           <Field 
             label="Customer Address" 
-            value={data.customer?.address} 
+            value={getFieldValue('address', 'customer')} 
             onChange={(v) => handleFieldChange('address', v, 'customer')} 
-            status={validity.text(data.customer?.address)}
+            status={validity.text(getFieldValue('address', 'customer'))}
             disabled={!editMode}
           />
         </div>
@@ -246,23 +277,23 @@ export default function ExtractedDataPanel({ id, data, onFieldChange, onLineItem
           <div className="text-sm font-medium text-gray-700">Seller Details</div>
           <Field 
             label="Seller Name" 
-            value={data.seller?.name} 
+            value={getFieldValue('name', 'seller')} 
             onChange={(v) => handleFieldChange('name', v, 'seller')} 
-            status={validity.text(data.seller?.name)}
+            status={validity.text(getFieldValue('name', 'seller'))}
             disabled={!editMode}
           />
           <Field 
             label="GSTIN" 
-            value={data.seller?.gstin} 
+            value={getFieldValue('gstin', 'seller')} 
             onChange={(v) => handleFieldChange('gstin', v, 'seller')} 
-            status={validity.gstin(data.seller?.gstin)}
+            status={validity.gstin(getFieldValue('gstin', 'seller'))}
             disabled={!editMode}
           />
           <Field 
             label="Seller Address" 
-            value={data.seller?.address} 
+            value={getFieldValue('address', 'seller')} 
             onChange={(v) => handleFieldChange('address', v, 'seller')} 
-            status={validity.text(data.seller?.address)}
+            status={validity.text(getFieldValue('address', 'seller'))}
             disabled={!editMode}
           />
         </div>
@@ -282,7 +313,7 @@ export default function ExtractedDataPanel({ id, data, onFieldChange, onLineItem
                 <div key={idx} className="grid grid-cols-12 gap-2 items-center">
                   <input
                     className="col-span-6 border rounded px-2 py-1 text-sm"
-                    value={item.item_name || ''}
+                    value={getLineItemValue(idx, 'item_name') || ''}
                     onChange={(e) => handleLineItemChange(idx, 'item_name', e.target.value)}
                     disabled={!editMode}
                     placeholder="Item Name"
@@ -290,7 +321,7 @@ export default function ExtractedDataPanel({ id, data, onFieldChange, onLineItem
                   <input
                     type="number"
                     className="col-span-2 border rounded px-2 py-1 text-sm"
-                    value={item.quantity || ''}
+                    value={getLineItemValue(idx, 'quantity') || ''}
                     onChange={(e) => handleLineItemChange(idx, 'quantity', e.target.value)}
                     disabled={!editMode}
                     placeholder="Qty"
@@ -298,7 +329,7 @@ export default function ExtractedDataPanel({ id, data, onFieldChange, onLineItem
                   <input
                     type="number"
                     className="col-span-2 border rounded px-2 py-1 text-sm"
-                    value={item.discount || ''}
+                    value={getLineItemValue(idx, 'discount') || ''}
                     onChange={(e) => handleLineItemChange(idx, 'discount', e.target.value)}
                     disabled={!editMode}
                     placeholder="Discount"
@@ -306,7 +337,7 @@ export default function ExtractedDataPanel({ id, data, onFieldChange, onLineItem
                   <input
                     type="number"
                     className="col-span-2 border rounded px-2 py-1 text-sm"
-                    value={item.gross_amount || ''}
+                    value={getLineItemValue(idx, 'gross_amount') || ''}
                     onChange={(e) => handleLineItemChange(idx, 'gross_amount', e.target.value)}
                     disabled={!editMode}
                     placeholder="Amount"
@@ -324,57 +355,57 @@ export default function ExtractedDataPanel({ id, data, onFieldChange, onLineItem
           <div className="text-sm font-medium text-gray-700">Summary</div>
           <Field 
             label="Subtotal" 
-            value={data.summary?.subtotal} 
+            value={getFieldValue('subtotal', 'summary')} 
             onChange={(v) => handleFieldChange('subtotal', v, 'summary')} 
-            status={validity.number(data.summary?.subtotal)}
+            status={validity.number(getFieldValue('subtotal', 'summary'))}
             type="number"
             disabled={!editMode}
           />
           <Field 
             label="CGST Total" 
-            value={data.summary?.cgst_total} 
+            value={getFieldValue('cgst_total', 'summary')} 
             onChange={(v) => handleFieldChange('cgst_total', v, 'summary')} 
-            status={validity.number(data.summary?.cgst_total)}
+            status={validity.number(getFieldValue('cgst_total', 'summary'))}
             type="number"
             disabled={!editMode}
           />
           <Field 
             label="SGST Total" 
-            value={data.summary?.sgst_total} 
+            value={getFieldValue('sgst_total', 'summary')} 
             onChange={(v) => handleFieldChange('sgst_total', v, 'summary')} 
-            status={validity.number(data.summary?.sgst_total)}
+            status={validity.number(getFieldValue('sgst_total', 'summary'))}
             type="number"
             disabled={!editMode}
           />
           <Field 
             label="IGST Total" 
-            value={data.summary?.igst_total} 
+            value={getFieldValue('igst_total', 'summary')} 
             onChange={(v) => handleFieldChange('igst_total', v, 'summary')} 
-            status={validity.number(data.summary?.igst_total)}
+            status={validity.number(getFieldValue('igst_total', 'summary'))}
             type="number"
             disabled={!editMode}
           />
           <Field 
             label="Total Tax" 
-            value={data.summary?.total_tax} 
+            value={getFieldValue('total_tax', 'summary')} 
             onChange={(v) => handleFieldChange('total_tax', v, 'summary')} 
-            status={validity.number(data.summary?.total_tax)}
+            status={validity.number(getFieldValue('total_tax', 'summary'))}
             type="number"
             disabled={!editMode}
           />
           <Field 
             label="Shipping Charges" 
-            value={data.summary?.shipping_charges} 
+            value={getFieldValue('shipping_charges', 'summary')} 
             onChange={(v) => handleFieldChange('shipping_charges', v, 'summary')} 
-            status={validity.number(data.summary?.shipping_charges)}
+            status={validity.number(getFieldValue('shipping_charges', 'summary'))}
             type="number"
             disabled={!editMode}
           />
           <Field 
             label="Grand Total" 
-            value={data.summary?.grand_total} 
+            value={getFieldValue('grand_total', 'summary')} 
             onChange={(v) => handleFieldChange('grand_total', v, 'summary')} 
-            status={validity.number(data.summary?.grand_total)}
+            status={validity.number(getFieldValue('grand_total', 'summary'))}
             type="number"
             disabled={!editMode}
           />

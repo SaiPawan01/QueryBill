@@ -20,26 +20,13 @@ function Document() {
 
   useEffect(() => {
     let isMounted = true;
-    (async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        setErrorStatus(null);
-        const res = await getExtractedDocumentApi(id);
-        if (isMounted) {
-          setData(res);
-          console.log(res);
-          setEdited({});
-        }
-      } catch (e) {
-        if (isMounted) {
-          setError(e?.response?.data?.detail || e.message || 'Failed to load document');
-          setErrorStatus(e?.response?.status || null);
-        }
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    })();
+    
+    const loadData = async () => {
+      if (!isMounted) return;
+      await fetchData();
+    };
+    
+    loadData();
 
     // Also fetch document metadata (name) from documents list
     (async () => {
@@ -63,7 +50,31 @@ function Document() {
     return () => clearTimeout(handle);
   }, [edited, data]);
 
-  const setField = (key, value) => setEdited((p) => ({ ...(p || {}), [key]: value }));
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      setErrorStatus(null);
+      const res = await getExtractedDocumentApi(id);
+      setData(res);
+      setEdited({});
+    } catch (e) {
+      setError(e?.response?.data?.detail || e.message || 'Failed to load document');
+      setErrorStatus(e?.response?.status || null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const setField = (key, value) => {
+    // Special case to handle refetch after save
+    if (key === '_forceRefetch') {
+      fetchData();
+      return;
+    }
+    setEdited((p) => ({ ...(p || {}), [key]: value }));
+  };
+  
   const setLineItemField = (idx, key, value) => {
     const current = Array.isArray(merged.line_items) ? merged.line_items : [];
     const next = current.map((li, i) => (i === idx ? { ...(li || {}), [key]: value } : li));
