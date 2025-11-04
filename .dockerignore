@@ -1,11 +1,31 @@
+# Python
 __pycache__/
 *.pyc
 *.pyo
-*.db
-env/
+*.pyd
+
+# Virtual environment
 venv/
-.git/
-.idea/
-.vscode/
-node_modules/
-uploads/
+.env
+
+# Git
+.git
+.gitignore
+
+# Node / Frontend
+frontend/node_modules
+frontend/dist
+
+# Docker
+*.Dockerfile
+docker-compose.yaml
+
+# Uploads / Temp
+backend/uploads
+*.db
+*.sqlite3
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
