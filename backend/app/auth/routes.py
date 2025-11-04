@@ -12,7 +12,7 @@ from app.auth.security import hash_password, verify_password
 from app.auth.jwt import create_access_token, decode_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["Authentication"])
 # tokenUrl should point to an endpoint that accepts OAuth2PasswordRequestForm (we expose /auth/token)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
@@ -42,8 +42,13 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     return user
 
 
-@router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED,summary="Register a New User")
 def register_user(payload: UserCreate, db: Session = Depends(get_db)):
+    """
+       Allows a new user to register by providing their first name, last name, email, and password. 
+       It checks if the email already exists, securely hashes the password, saves the user in the database, 
+       and returns the user details (excluding the password).
+    """
     existing = get_user_by_email(db, payload.email_id)
     if existing:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
@@ -60,8 +65,9 @@ def register_user(payload: UserCreate, db: Session = Depends(get_db)):
     return user
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=Token,summary="User Login")
 def login(payload: LoginRequest, db: Session = Depends(get_db)):
+    """Authenticates a user using email and password and returns a JWT token."""
     user = get_user_by_email(db, payload.email_id)
     if not user or not verify_password(payload.password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
@@ -71,7 +77,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
 
 
 
-@router.post("/token", response_model=Token)
+@router.post("/token", response_model=Token,summary="Generate OAuth2 Token")
 def token(payload: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """OAuth2-compatible token endpoint for Swagger / clients that submit form data."""
     user = get_user_by_email(db, payload.username)
@@ -83,14 +89,15 @@ def token(payload: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(
 
 
 
-@router.get("/me", response_model=UserOut)
+@router.get("/me", response_model=UserOut,summary="Get Current User")
 def read_me(current_user: UserModel = Depends(get_current_user)):
+    """Fetches the details of the currently authenticated user using the access token."""
     return current_user
 
 
-@router.put("/me", response_model=UserOut)
+@router.put("/me", response_model=UserOut,summary="Update Current User Details")
 def update_me(payload: UserUpdate, current_user: UserModel = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Update current user's profile (first_name, last_name, email_id)."""
+    """Updates the currently logged-in user's profile details such as first name, last name, and email."""
     # If email change is requested, ensure it's not already taken
     if payload.email_id and payload.email_id != current_user.email_id:
         existing = get_user_by_email(db, payload.email_id)

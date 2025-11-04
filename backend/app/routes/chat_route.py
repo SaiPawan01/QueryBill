@@ -11,7 +11,11 @@ from app.services.chat_service import ChatService
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
 
-@router.post("/{document_id}/message", response_model=ChatResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/{document_id}/message", response_model=ChatResponse, status_code=status.HTTP_201_CREATED,summary="Send Message and Get AI Response",
+    description=(
+        "Send a message related to a document and receive an AI-generated response. "
+        "The conversation is stored in the chat history. Only accessible if the document belongs to the user."
+    ))
 async def send_message(
     document_id: int,
     message_data: ChatMessageCreate,
@@ -70,7 +74,8 @@ async def send_message(
     )
 
 
-@router.get("/{document_id}/history", response_model=ChatHistoryResponse)
+@router.get("/{document_id}/history", response_model=ChatHistoryResponse,summary="Get Chat History",
+    description="Retrieve all chat messages and AI responses for a specific document belonging to the authenticated user.")
 async def get_chat_history(
     document_id: int,
     current_user = Depends(get_current_user),

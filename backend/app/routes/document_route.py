@@ -36,9 +36,9 @@ def validate_file(file: UploadFile):
 
 
 
-@router.post("/upload")
+@router.post("/upload",summary="Upload Document")
 async def upload(file: UploadFile = File(...), user = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Upload a document (PDF or image) for the authenticated user."""
+    """Uploads a PDF or image file for the authenticated user, stores it in the server, and saves file details in the database."""
     valid, error = validate_file(file)
     if not valid:
         raise HTTPException(
@@ -85,7 +85,7 @@ async def upload(file: UploadFile = File(...), user = Depends(get_current_user),
 
 
 
-@router.get("/list")
+@router.get("/list", summary="List User Documents")
 async def list_docs(
     q: Optional[str] = None,
     file_type: Optional[str] = None,
@@ -137,7 +137,7 @@ async def list_docs(
             detail=f"Failed to retrieve documents: {str(e)}"
         )
 
-@router.get("/{doc_id}")
+@router.get("/{doc_id}",summary="Download Document")
 async def get_doc(doc_id: int, user = Depends(get_current_user), db: Session = Depends(get_db)):
     """Download a specific document by ID."""
     doc = db.query(Document).filter(Document.id == doc_id, Document.user_id == user.id).first()
@@ -199,9 +199,10 @@ async def delete_doc(doc_id: int, user = Depends(get_current_user), db: Session 
         )
 
 
-@router.post("/archive/{doc_id}")
+@router.post("/archive/{doc_id}",summary="Archive Document",
+    description="Archive a document by setting its status to 'archived'. Only works if the document belongs to the authenticated user.")
 async def archive_doc(doc_id: int, user = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Archive a document (soft state change)."""
+    
     doc = db.query(Document).filter(Document.id == doc_id, Document.user_id == user.id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
@@ -216,8 +217,8 @@ async def archive_doc(doc_id: int, user = Depends(get_current_user), db: Session
 
 
 @router.post("/unarchive/{doc_id}")
-async def unarchive_doc(doc_id: int, user = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Unarchive a document (set status back to active)."""
+async def unarchive_doc(doc_id: int, user = Depends(get_current_user), db: Session = Depends(get_db),summary="Unarchive Document",
+    description="Restore an archived document by setting its status back to 'active'. Only accessible to its owner."):
     doc = db.query(Document).filter(Document.id == doc_id, Document.user_id == user.id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")

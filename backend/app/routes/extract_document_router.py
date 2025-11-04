@@ -11,11 +11,15 @@ from app.auth.routes import get_current_user
 
 router = APIRouter(
     prefix="/document/extract",
-    tags=["extract"],
+    tags=["Extrat Data"],
     responses={405: {"description": "Method not allowed"}},
 )
 
-@router.post("/{doc_id}", response_model=ExtractedDataOut)
+@router.post("/{doc_id}", response_model=ExtractedDataOut,summary="Extract Data from Document",description=(
+        "Extracts data from a document by ID. "
+        "If extraction is already available, it returns the existing result. "
+        "Only the document owner can access it."
+    ))
 def extract_sync(
     doc_id: int,
     db: Session = Depends(get_db),
@@ -38,7 +42,8 @@ def extract_sync(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/{doc_id}", response_model=ExtractedDataOut)
+@router.get("/{doc_id}", response_model=ExtractedDataOut,summary="Get Extracted Data",
+    description="Retrieve extracted information for a specific document. Returns 404 if the document or extraction data is not found.")
 def get_extracted(
     doc_id: int,
     db: Session = Depends(get_db),
@@ -65,7 +70,11 @@ def get_extracted(
     
     return data
 
-@router.put("/{doc_id}", response_model=ExtractedDataOut)
+@router.put("/{doc_id}", response_model=ExtractedDataOut, summary="Update Extracted Data",
+    description=(
+        "Update fields of extracted data for a specific document. "
+        "Only provided fields are modified. Requires document ownership."
+    ))
 def update_extracted(
     doc_id: int,
     updated_data: ExtractedDataBase,
