@@ -128,11 +128,11 @@ Built using **React, FastAPI, PostgreSQL**, and **LangChain/LangGraph** with ful
 
 ### 🟦 **Login Page**
 
-![Login Page](./frontend/assets/Login.jpg)
+![Login Page](./frontend/assets/Login.png)
 
 ### 🟩 **Sign-Up Page**
 
-![Sign-Up Page](./frontend/assets/Signup.jpg)
+![Sign-Up Page](./frontend/assets/Signup.png)
 
 ### 🧾 **Dashboard**
 
@@ -140,7 +140,7 @@ Built using **React, FastAPI, PostgreSQL**, and **LangChain/LangGraph** with ful
 
 ### 🪟 **Three-Panel Layout**
 
-![Three-Panel Layout](./frontend/assets/ThreePanelPaget.jpg)
+![Three-Panel Layout](./frontend/assets/ThreePanelPage.png)
 
 ## ⚙️ Setup & Installation
 
