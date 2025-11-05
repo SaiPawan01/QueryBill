@@ -80,7 +80,7 @@ async def upload(file: UploadFile = File(...), user = Depends(get_current_user),
             os.remove(filepath)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to upload document. Please try again."
+            detail=str(e)
         )
 
 
