@@ -5,11 +5,14 @@ Built using **React, FastAPI, PostgreSQL**, and **LangChain/LangGraph** with ful
 
 ## 🌐 Links
 
-**Application Link:** [http://13.233.102.26/](http://13.233.102.26/)
+### Latest Deployment (AWS EC2 t3.medium instance + Elastic IP)
 
-**API Documentation:** [http://13.233.102.26/docs](http://13.233.102.26:8000/docs)
+**Application Link:** [http://13.200.128.146/](http://13.200.128.146/)
+
+**API Documentation (Swagger):** [http://13.200.128.146:8000/docs](http://13.200.128.146:8000/docs)
 
 
+### Project Demo Link : [Google Drive Link](https://drive.google.com/file/d/1CAm9uTABTzo1L0T7O2DGnQ-wK56-rsow/view?usp=sharing)
 
 ## 🧩 Architecture
 
@@ -18,7 +21,7 @@ Built using **React, FastAPI, PostgreSQL**, and **LangChain/LangGraph** with ful
 | -------------------- | ----------------------------------------------- |
 | **Frontend**       | React.js, Redux, Tailwind CSS                 |
 | **Backend**        | Python, FastAPI, REST API, JWT Authentication |
-| **Database**       | PostgreSQL (Supabase deployment) |
+| **Database**       | PostgreSQL (Supabase deployment)              |
 | **AI Layer**       | LangChain / Gemini                            |
 | **Authentication** | JWT, bcrypt                                   |
 | **Deployment**     | Docker, Docker Compose, AWS EC2               |
@@ -31,7 +34,7 @@ Built using **React, FastAPI, PostgreSQL**, and **LangChain/LangGraph** with ful
 │   ├── .venv/                      </span><span><span class="hljs-comment"># Python virtual environment (ignored in Git)</span></span><span>
 │   ├── app/
 │   │   ├── auth/                   </span><span><span class="hljs-comment"># Authentication routes & logic</span></span><span>
-│   │   ├── models/                 </span><span><span class="hljs-comment"># Database models (Pydantic / SQLAlchemy)</span></span><span>
+│   │   ├── models/                 </span><span><span class="hljs-comment"># Database models (SQLAlchemy)</span></span><span>
 │   │   ├── routes/                 </span><span><span class="hljs-comment"># API route definitions</span></span><span>
 │   │   ├── schemas/                </span><span><span class="hljs-comment"># Pydantic schemas for request/response models</span></span><span>
 │   │   ├── services/               </span><span><span class="hljs-comment"># Reusable backend business logic</span></span><span>
@@ -109,20 +112,17 @@ Built using **React, FastAPI, PostgreSQL**, and **LangChain/LangGraph** with ful
 ## ⚙️ Challenges Faced and Solutions
 
 
-| Challenge      | Solution       |
-| ---------------- | ---------------- |
-| Faced CORS error | Configured FastAPI `CORSMiddleware` with allowed origins and updated frontend API URL. |
-| Database migration | Hosted the database on Supabase and executed the SQL schema script for quick setup. |
-| Pytesseract import error | Switched to EasyOCR for smoother text extraction without dependency issues. |
-| No standard schema for utility bills | Designed a detailed utility bill schema to capture all essential information. |
-| Python dependency conflicts | Resolved by installing correct dependency versions and specifying them in `requirements.txt`. |
-| Document upload functionality timed out | Increased request timeout limits in `nginx.conf`|
-| Database schema export error in pgAdmin | Resolved by taking a backup of the database without including data. |
-
-
-
-
-
+| Challenge                               | Solution                                                                                     |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Faced CORS error                        | Configured FastAPI`CORSMiddleware` with allowed origins and updated frontend API URL.        |
+| Database migration                      | Hosted the database on Supabase and executed the SQL schema script for quick setup.          |
+| Pytesseract import error                | Switched to EasyOCR for smoother text extraction without dependency issues.                  |
+| No standard schema for utility bills    | Designed a detailed utility bill schema to capture all essential information.                |
+| Python dependency conflicts             | Resolved by installing correct dependency versions and specifying them in`requirements.txt`. |
+| Document upload functionality timed out | Increased request timeout limits in`nginx.conf`                                              |
+| Database schema export error in pgAdmin | Resolved by taking a backup of the database without including data.                          |
+| Long page reloads in deployment         | Changed AWS EC2 instance type from t3.micro to t3.medium                                     |
+| Aws IP changes on shutdown              | Resolved by attaching Elastic IP to the AWS instance                                         |
 
 ## 📸 Screenshots
 
@@ -140,7 +140,7 @@ Built using **React, FastAPI, PostgreSQL**, and **LangChain/LangGraph** with ful
 
 ### 🪟 **Three-Panel Layout**
 
-![Three-Panel Layout](./frontend/assets/ThreePanelPage.jpg)
+![Three-Panel Layout](./frontend/assets/ThreePanelPaget.jpg)
 
 ## ⚙️ Setup & Installation
 
@@ -160,7 +160,7 @@ Create a .env file in both frontend and backend folders.
 ###### 🖥️ Frontend (.env)
 
 ```bash
-VITE_API_URL=http://<your-ec2-ip>
+VITE_API_URL=http://<your-ec2-ip> or http://localhost:8000
 ```
 
 ###### ⚙️ Backend (.env)
@@ -182,18 +182,28 @@ GEMINI_API_KEY=your_gemini_api_key
 
 ```
 
-##### Run Without Docker (Manual Setup)
+### Run Without Docker (Manual Setup)
 
 If you prefer to run the project locally without Docker:
 
 ###### 🖥️ Backend Setup
 
+```bash
 cd backend
 python -m venv .venv
-.venv/Scripts/activate    # ( on Windows)
+
+# Activate virtual environment:
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
 
+# Start FastAPI server
 uvicorn app.main:app --reload
+```
 
 ###### 💻 Frontend Setup
 
@@ -203,9 +213,43 @@ npm install
 npm run dev
 ```
 
-##### 🚀Access the app locally:
+##### 🚀🚀Access the app in Broswer:
 
 ```bash
 Frontend → http://localhost:5173
 Backend → http://localhost:8000/docs
 ```
+
+### Run with Docker Compose (Windows)
+
+1. **Install Docker Desktop**
+
+   Download from: [https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop)
+2. **Verify Docker & Compose are Installed**
+
+   ```bash
+   docker --version
+   docker compose version
+   ```
+3. **Start the Application**
+
+   From the root project directory (`QueryBill/`):
+
+   ```bash
+   docker compose up --build -d
+   ```
+4. **Access the app in Broswer**
+
+   ```bash
+   Frontend → http://localhost:5173
+   Backend → http://localhost:8000/docs
+   ```
+5. **Stop Everything**
+
+   ```bash
+   # Stop and remove containers
+   docker compose down
+
+   # Stop and remove containers + volumes (⚠ deletes database data)
+   docker compose down -v
+   ```
