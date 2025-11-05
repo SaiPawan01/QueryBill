@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { toast } from 'react-toastify'
 
 // Use VITE_API_URL fallback to localhost for dev
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
@@ -30,16 +29,22 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const status = error.response?.status;
-    if (status === 401 || status === 403) {
-      // Clear token and notify user
+    const status = error?.response?.status;
+    const requestUrl = error?.config?.url || '';
+    // treat requests to auth endpoints as caller-handled (do not redirect)
+    const isAuthEndpoint = typeof requestUrl === 'string' && requestUrl.startsWith('/auth');
+
+    if ((status === 401 || status === 403) && !isAuthEndpoint) {
+      // Clear token and cached user for protected endpoint failures
       localStorage.removeItem('access_token');
-      // show a toast (ToastContainer is global in App)
-      try { window.toast && window.toast('Session expired. Please login again.') } catch (e) {}
-      // Using react-toastify via import is better — but to avoid bundling issues we also redirect
-      // Redirect to login
+      localStorage.removeItem('user');
+      localStorage.removeItem('token_expires_at');
+      // Do not show toast here to avoid duplicate notifications; ProtectedRoute handles user-facing message.
+      console.info('Session expired or unauthorized response received; redirecting to login.');
       window.location.href = '/';
     }
+
+    // For auth endpoints (login/register/token) let the caller handle the error so UI can show messages
     return Promise.reject(error);
   }
 );

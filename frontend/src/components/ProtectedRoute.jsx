@@ -6,18 +6,16 @@ function isTokenExpired(token) {
   if (!token) return true
   try {
     const parts = token.split('.')
-    if (parts.length < 2) return false
-    const payload = parts[1]
-    // base64url -> base64
-    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
+    if (parts.length < 2) return true   // previously returned false; malformed token should be considered invalid
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
     const jsonPayload = JSON.parse(atob(base64))
-    if (jsonPayload.exp) {
-      return Date.now() >= jsonPayload.exp * 1000
-    }
-    return false
+    
+    // Add some buffer time (5 minutes) to prevent edge cases
+    const bufferTime = 5 * 60 * 1000
+    return jsonPayload.exp ? Date.now() >= (jsonPayload.exp * 1000 - bufferTime) : true
   } catch (err) {
-    // If parsing fails, assume not expired (avoid forcing logout for bad token format)
-    return false
+    console.error('Token validation error:', err)
+    return true
   }
 }
 
@@ -29,6 +27,8 @@ function ProtectedRoute({ children }) {
     if (!token) return
     if (isTokenExpired(token)) {
       localStorage.removeItem('access_token')
+      localStorage.removeItem('user')
+      localStorage.removeItem('token_expires_at')
       setExpired(true)
       toast.info("Session expired. You have been logged out.", { position: 'top-right' })
     }

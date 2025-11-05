@@ -7,18 +7,31 @@ function Navbar() {
     const [userName, setUserName] = React.useState(null);
 
     React.useEffect(() => {
+      // try to use cached user first
+      const cached = localStorage.getItem('user');
+      if (cached) {
+        try {
+          const u = JSON.parse(cached);
+          setUserName(u?.first_name ? `${u.first_name} ${u.last_name || ''}`.trim() : u?.email_id);
+          return;
+        } catch (e) { /* fall through to fetch */ }
+      }
+
       // lazy load user profile if token exists
       const token = localStorage.getItem('access_token');
       if (!token) return;
       import('../utils/api').then(({ authAPI }) => {
         authAPI.getMe().then((res) => {
           setUserName(res.data?.first_name ? `${res.data.first_name} ${res.data.last_name || ''}`.trim() : res.data?.email_id);
+          try { localStorage.setItem('user', JSON.stringify(res.data)); } catch (e) {}
         }).catch(() => {});
       });
     }, []);
 
   const logout = () => {
     localStorage.removeItem('access_token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('token_expires_at');
     navigate('/', { replace: true });
   };
 
